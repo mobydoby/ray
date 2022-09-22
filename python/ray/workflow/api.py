@@ -728,6 +728,23 @@ def continuation(dag_node: "DAGNode") -> Union["DAGNode", Any]:
         return dag_node
     return ray.get(dag_node.execute())
 
+@PublicAPI(stability="alpha")
+def get_tree(workflow_id: str, task_id:str = None)->dict:
+    """
+    return all the metadata of a workflow and its tasks.
+    Optionally, return only the metadata of a task within a workflow
+
+    Args:
+        workflow_id: workflow to return as tree
+        task_id [optional]: task metadata to return
+
+    Raises: 
+        WorkflowNotFound: the workflow does not exist
+    """
+    _ensure_workflow_initialized()
+    workflow_manager = workflow_access.get_management_actor()
+    return workflow_manager.get_tree.remote(workflow_id)
+
 
 @PublicAPI(stability="alpha")
 class options:
@@ -781,6 +798,8 @@ class options:
         return f
 
 
+
+
 __all__ = (
     "init",
     "run",
@@ -799,4 +818,5 @@ __all__ = (
     "wait_for_event",
     "options",
     "continuation",
+    "get_tree",
 )

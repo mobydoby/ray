@@ -146,6 +146,13 @@ class WorkflowExecutionState:
         """
         return self.output_map.get(task_id, self.checkpoint_map.get(task_id))
 
+    def get_metadata(self):
+        return {
+            "downstream_dependencies": self.downstream_dependencies,
+            "task_execution_data": self.task_execution_metadata,
+            "task_data": self.tasks
+        }
+
     def pop_frontier_to_run(self) -> Optional[TaskID]:
         """Pop one task to run from the frontier queue."""
         try:
@@ -249,3 +256,5 @@ class WorkflowExecutionState:
                     catch_exceptions=options.catch_exceptions,
                 ),
             )
+
+    

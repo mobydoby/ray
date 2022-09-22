@@ -328,6 +328,63 @@ class WorkflowManagementActor:
 
     def ready(self) -> None:
         """A no-op to make sure the actor is ready."""
+    
+    def get_tree(self, workflow_id: str, task_id: str = None):
+        """
+        return all the metadata of a workflow and its tasks.
+        Optionally, return only the metadata of a task within a workflow
+
+        Args:
+            workflow_id: workflow to return as tree
+            task_id [optional]: task metadata to return
+
+        Raises: 
+            WorkflowNotFound: the workflow does not exist
+
+        the returned dictionary has the form: 
+        Dict workflow_data{
+             Workflow_Id :
+             {
+                Dict workflow_metadata: {
+                  status,
+                  user_metadata,
+                  stats,
+                }
+                Dict tasks: {
+                  Task_id: 
+                    {
+                      Dict Downstream Dependencies
+                      Dict TaskExecutionMetadata
+                      Dict Task
+                    }
+                }
+            }
+        }
+        """
+        if not isinstance(workflow_id, str):
+            raise TypeError("workflow_id has to be a string type.")
+
+        # TODO add functionality for non running workflows. 
+        # currently will throw error if workflow is not running
+        if workflow_id in self._executed_workflows:
+            raise RuntimeError(f"Workflow[id={workflow_id}] has been executed.")
+
+        if workflow_id not in self._workflow_executors:
+            raise WorkflowNotFoundError(workflow_id)
+        
+        all_task_data = self._workflow_executors[workflow_id].get_state().get_metadata()
+        status = self.get_workflow_status(workflow_id)
+        if status != WorkflowStatus.RUNNING:
+            raise ValueError("get_tree: Non-running workflows currently not supported")
+        
+        rv = {
+            "workflow_metadata" : {
+                "status": status,
+                #user_
+            },
+            "tasks_data": all_task_data
+        }
+        return rv
 
 
 def init_management_actor(
