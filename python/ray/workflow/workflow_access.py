@@ -1,7 +1,9 @@
 import asyncio
+from email.policy import default
 import logging
 import queue
 from typing import Dict, List, Set, Optional, TYPE_CHECKING
+from dataclasses import defaultdict
 
 import ray
 
@@ -19,6 +21,7 @@ from ray.workflow.exceptions import (
 from ray.workflow.workflow_executor import WorkflowExecutor
 from ray.workflow.workflow_state import WorkflowExecutionState
 from ray.workflow.workflow_context import WorkflowTaskContext
+from ray.workflow.workflow_tree import WorkflowTree
 
 if TYPE_CHECKING:
     from ray.actor import ActorHandle
@@ -350,13 +353,10 @@ class WorkflowManagementActor:
                   user_metadata,
                   stats,
                 }
-                Dict tasks: {
-                  Task_id: 
-                    {
-                      Dict Downstream Dependencies
-                      Dict TaskExecutionMetadata
-                      Dict Task
-                    }
+                Dict task_data: {
+                    "downstream_dependencies": list,
+                    "task_execution_data": obj,
+                    "task_data": obj
                 }
             }
         }
@@ -372,19 +372,18 @@ class WorkflowManagementActor:
         if workflow_id not in self._workflow_executors:
             raise WorkflowNotFoundError(workflow_id)
         
-        all_task_data = self._workflow_executors[workflow_id].get_state().get_metadata()
+        #returns metadata in the form dict:
+        tasks_data = self._workflow_executors[workflow_id].get_state().get_metadata()
+        
         status = self.get_workflow_status(workflow_id)
         if status != WorkflowStatus.RUNNING:
             raise ValueError("get_tree: Non-running workflows currently not supported")
         
-        rv = {
-            "workflow_metadata" : {
-                "status": status,
-                #user_
-            },
-            "tasks_data": all_task_data
-        }
-        return rv
+        workflow_data = defaultdict()
+        workflow_data["status"] = status
+        workflow_data["workflow_id"] = workflow_id
+
+        return WorkflowTree(workflow_data, tasks_data)
 
 
 def init_management_actor(
