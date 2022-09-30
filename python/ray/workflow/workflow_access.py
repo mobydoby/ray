@@ -3,7 +3,7 @@ from email.policy import default
 import logging
 import queue
 from typing import Dict, List, Set, Optional, TYPE_CHECKING
-from dataclasses import defaultdict
+from collections import defaultdict
 
 import ray
 
@@ -382,6 +382,10 @@ class WorkflowManagementActor:
         workflow_data = defaultdict()
         workflow_data["status"] = status
         workflow_data["workflow_id"] = workflow_id
+        workflow_data["user_metadata"] = defaultdict()
+
+        #TODO: add information about workflow completion times etc.
+        # workflow_data["stats"] = defaultdict()
 
         return WorkflowTree(workflow_data, tasks_data)
 

@@ -5,8 +5,9 @@ from collections import defaultdict
 class WorkflowTree:
     def __init__(
         self, 
-        workflow_data: dict, 
-        tasks_data: dict
+        #initialize default workflow data
+        workflow_data = defaultdict(),
+        tasks_data = defaultdict()
     ):
         """
         Tree structure for building a tree on the frontend. 
@@ -30,16 +31,16 @@ class WorkflowTree:
         """
         #workflow data
         self._status = workflow_data["status"]
-        self._workflow_user_metatdata = workflow_data["user_metatdata"]
+        self._workflow_user_metatdata = workflow_data["user_metadata"]
         self._id = workflow_data["workflow_id"]
-        self._stats = workflow_data["stats"]
+        # self._stats = workflow_data["stats"]
 
         #tasks(NODES) data (for this workflow)
         self._dependencies = tasks_data["downstream_dependencies"]
-
+        # raise ValueError(type(self._dependencies))
         #self._edges is in the form [(t1, t2), (t2, t3), ect.]
-        self._edges = defaultdict(list)
-        for task1, dependencies in self._dependencies:
+        self._edges = []
+        for task1, dependencies in self._dependencies.items():
             for task2 in dependencies: 
                 self._edges.append((task1, task2))
 
@@ -49,8 +50,12 @@ class WorkflowTree:
         # dictionary of run_time data
         self._exec_data = tasks_data["task_execution_data"]
 
-    def __repr__():
-        pass
+    def __repr__(self):
+        return f"HI, I AM A TREE REP:\r\n\
+                 id: {self._id},\r\n\
+                 status: {self._status},\r\n\
+                 node: {self._nodes},\r\n\
+                 edges: {self._edges}"
     
     def getNodes(self):
         return self._nodes
