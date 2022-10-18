@@ -16,6 +16,7 @@ from ray.workflow.api import (
     wait_for_event,
     continuation,
     options,
+    get_tree,
 )
 from ray.workflow.exceptions import (
     WorkflowError,
@@ -52,4 +53,5 @@ __all__ = [
     "WorkflowError",
     "WorkflowExecutionError",
     "WorkflowCancellationError",
+    "get_tree"
 ]

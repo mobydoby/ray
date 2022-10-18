@@ -361,24 +361,34 @@ class WorkflowManagementActor:
             }
         }
         """
+
+        # assert the workflow exists
         if not isinstance(workflow_id, str):
             raise TypeError("workflow_id has to be a string type.")
-
-        # TODO add functionality for non running workflows. 
-        # currently will throw error if workflow is not running
-        if workflow_id in self._executed_workflows:
-            raise RuntimeError(f"Workflow[id={workflow_id}] has been executed.")
-
-        if workflow_id not in self._workflow_executors:
-            raise WorkflowNotFoundError(workflow_id)
         
-        #returns metadata in the form dict:
-        tasks_data = self._workflow_executors[workflow_id].get_state().get_metadata()
-        
+        # gets the state of the workflow either from storage or from executor state
         status = self.get_workflow_status(workflow_id)
         if status != WorkflowStatus.RUNNING:
-            raise ValueError("get_tree: Non-running workflows currently not supported")
+            # TODO: if the workflow is not running, we have to retrive the accesspoint
+            # of the start of the workflow. 
+
+            from ray.workflow.workflow_state_from_storage import workflow_state_from_storage
+            state = workflow_state_from_storage(workflow_id, None)
+            print(f"NOT RUNNING!: {state.downstream_dependencies}")
         
+        else: # when the workflow is running for the first time
+
+            # if not in executors, not a real workflow
+            if workflow_id not in self._workflow_executors:
+                raise WorkflowNotFoundError(workflow_id)
+            
+            #get state from executors
+            state = self._workflow_executors[workflow_id].get_state()
+            print(f"RUNNIN!: {state.downstream_dependencies}\n\n\n")
+
+        
+        tasks_data = state.get_metadata()
+
         workflow_data = defaultdict()
         workflow_data["status"] = status
         workflow_data["workflow_id"] = workflow_id

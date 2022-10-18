@@ -51,11 +51,11 @@ class WorkflowTree:
         self._exec_data = tasks_data["task_execution_data"]
 
     def __repr__(self):
-        return f"HI, I AM A TREE REP:\r\n\
+        return f"I AM TREE:\r\n\
                  id: {self._id},\r\n\
                  status: {self._status},\r\n\
-                 node: {self._nodes},\r\n\
-                 edges: {self._edges}"
+                 nodes ({len(self._nodes)}): {self._nodes},\r\n\
+                 edges ({len(self._edges)}): {self._edges}"
     
     def getNodes(self):
         return self._nodes
