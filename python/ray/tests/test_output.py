@@ -205,25 +205,19 @@ module = __import__(module_name)
 
 # Define an actor that closes over this temporary module. This should
 # fail when it is unpickled.
-@ray.remote(max_restarts=0)
+@ray.remote
 class Foo:
     def __init__(self):
         self.x = module.temporary_python_file()
-    def ready(self):
-        pass
+
 a = Foo.remote()
-try:
-    ray.get(a.ready.remote())
-except Exception as e:
-    pass
-from time import sleep
-sleep(3)
+import time
+time.sleep(3)  # Wait for actor start.
 """
     proc = run_string_as_driver_nonblocking(script)
     out_str = proc.stdout.read().decode("ascii")
     err_str = proc.stderr.read().decode("ascii")
     print(out_str)
-    print("-----")
     print(err_str)
     assert "ModuleNotFoundError: No module named" in err_str
     assert "RuntimeError: The actor with name Foo failed to import" in err_str
