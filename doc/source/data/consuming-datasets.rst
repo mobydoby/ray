@@ -41,8 +41,9 @@ Datasets can be consumed a row at a time using the
 or a batch at a time using the
 :meth:`ds.iter_batches() <ray.data.Dataset.iter_batches>` API, where you can specify
 batch size as well as the desired batch format. By default, the batch format is
-``"default"``. For tabular data, the default format is a Pandas DataFrame; for Python
-objects, it's a list.
+``"native"``, which means that the batch format that's native to the data type will be
+returned. For tabular data, the native format is a Pandas DataFrame; for Python objects,
+it's a list.
 
 .. literalinclude:: ./doc_code/accessing_datasets.py
   :language: python
@@ -108,7 +109,7 @@ to repartition the Dataset before writing out.
     :start-after: __write_json_begin__
     :end-before: __write_json_end__
 
-.. tabbed:: NumPy
+.. tabbed:: NumPy 
 
   .. literalinclude:: ./doc_code/saving_datasets.py
     :language: python

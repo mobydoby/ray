@@ -188,27 +188,27 @@ class GcsPlacementGroupManager : public rpc::PlacementGroupInfoHandler {
 
   ~GcsPlacementGroupManager() = default;
 
-  void HandleCreatePlacementGroup(rpc::CreatePlacementGroupRequest request,
+  void HandleCreatePlacementGroup(const rpc::CreatePlacementGroupRequest &request,
                                   rpc::CreatePlacementGroupReply *reply,
                                   rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleRemovePlacementGroup(rpc::RemovePlacementGroupRequest request,
+  void HandleRemovePlacementGroup(const rpc::RemovePlacementGroupRequest &request,
                                   rpc::RemovePlacementGroupReply *reply,
                                   rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleGetPlacementGroup(rpc::GetPlacementGroupRequest request,
+  void HandleGetPlacementGroup(const rpc::GetPlacementGroupRequest &request,
                                rpc::GetPlacementGroupReply *reply,
                                rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleGetNamedPlacementGroup(rpc::GetNamedPlacementGroupRequest request,
+  void HandleGetNamedPlacementGroup(const rpc::GetNamedPlacementGroupRequest &request,
                                     rpc::GetNamedPlacementGroupReply *reply,
                                     rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleGetAllPlacementGroup(rpc::GetAllPlacementGroupRequest request,
+  void HandleGetAllPlacementGroup(const rpc::GetAllPlacementGroupRequest &request,
                                   rpc::GetAllPlacementGroupReply *reply,
                                   rpc::SendReplyCallback send_reply_callback) override;
   void HandleWaitPlacementGroupUntilReady(
-      rpc::WaitPlacementGroupUntilReadyRequest request,
+      const rpc::WaitPlacementGroupUntilReadyRequest &request,
       rpc::WaitPlacementGroupUntilReadyReply *reply,
       rpc::SendReplyCallback send_reply_callback) override;
 

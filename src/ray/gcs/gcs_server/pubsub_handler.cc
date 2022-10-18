@@ -29,7 +29,7 @@ InternalPubSubHandler::InternalPubSubHandler(
   });
 }
 
-void InternalPubSubHandler::HandleGcsPublish(rpc::GcsPublishRequest request,
+void InternalPubSubHandler::HandleGcsPublish(const rpc::GcsPublishRequest &request,
                                              rpc::GcsPublishReply *reply,
                                              rpc::SendReplyCallback send_reply_callback) {
   if (gcs_publisher_ == nullptr) {
@@ -50,7 +50,7 @@ void InternalPubSubHandler::HandleGcsPublish(rpc::GcsPublishRequest request,
 // and convert the reply to rpc::PubsubLongPollingReply because GCS RPC services are
 // required to have the `status` field in replies.
 void InternalPubSubHandler::HandleGcsSubscriberPoll(
-    rpc::GcsSubscriberPollRequest request,
+    const rpc::GcsSubscriberPollRequest &request,
     rpc::GcsSubscriberPollReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   if (gcs_publisher_ == nullptr) {
@@ -82,7 +82,7 @@ void InternalPubSubHandler::HandleGcsSubscriberPoll(
 // rpc::GcsSubscriberCommandBatchReply as reply type instead of using
 // rpc::GcsSubscriberCommandBatchReply directly.
 void InternalPubSubHandler::HandleGcsSubscriberCommandBatch(
-    rpc::GcsSubscriberCommandBatchRequest request,
+    const rpc::GcsSubscriberCommandBatchRequest &request,
     rpc::GcsSubscriberCommandBatchReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   if (gcs_publisher_ == nullptr) {

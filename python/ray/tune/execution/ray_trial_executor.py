@@ -40,11 +40,6 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_GET_TIMEOUT = 60.0  # seconds
 
-DEFAULT_ENV_VARS = {
-    # https://github.com/ray-project/ray/issues/28197
-    "PL_DISABLE_FORK": "1"
-}
-
 
 class _ActorClassCache:
     """Caches actor classes.
@@ -71,10 +66,7 @@ class _ActorClassCache:
 
     def get(self, trainable_cls):
         """Gets the wrapped trainable_cls, otherwise calls ray.remote."""
-        env_vars = DEFAULT_ENV_VARS.copy()
-        env_vars["TUNE_ORIG_WORKING_DIR"] = os.getcwd()
-
-        runtime_env = {"env_vars": env_vars}
+        runtime_env = {"env_vars": {"TUNE_ORIG_WORKING_DIR": os.getcwd()}}
         if trainable_cls not in self._cache:
             remote_cls = ray.remote(runtime_env=runtime_env)(trainable_cls)
             self._cache[trainable_cls] = remote_cls
@@ -93,13 +85,13 @@ class _LocalWrapper:
         return self._result
 
 
-def _post_stop_cleanup(future, pg, timeout: Optional[float] = None):
+def _post_stop_cleanup(future, pg):
     """Things to be done after a trial is stopped."""
     assert isinstance(pg, PlacementGroup)
     try:
-        # Let's check one more time if the future resolved. If not,
-        # we remove the PG which will terminate the actor.
-        ray.get(future, timeout=timeout)
+        # This should not be blocking as
+        # we are only here when triggered.
+        ray.get(future, timeout=0)
     except GetTimeoutError:
         if log_once("tune_trial_cleanup_timeout"):
             logger.error(
@@ -133,11 +125,11 @@ class _TrialCleanup:
 
     def get_next(self):
         """Get the next future that is eligible to be cleaned up forcibly."""
-        if len(self._future_to_insert_time) > 0 and (
-            self._future_to_insert_time[0][1] + self._force_cleanup < time.time()
+        if (
+            len(self._future_to_insert_time) > 0
+            and self._future_to_insert_time[0][1] + self._force_cleanup < time.time()
         ):
-            future, _time = self._future_to_insert_time.popleft()
-            return future
+            return self._future_to_insert_time.popleft()
         else:
             return None
 
@@ -212,7 +204,7 @@ class RayTrialExecutor:
         # future --> (type, trial/pg)
         self._futures = {}
 
-        force_trial_cleanup = int(os.environ.get("TUNE_FORCE_TRIAL_CLEANUP_S", "600"))
+        force_trial_cleanup = int(os.environ.get("TUNE_FORCE_TRIAL_CLEANUP_S", "0"))
         self._get_next_event_wait = int(
             os.environ.get("TUNE_GET_EXECUTOR_EVENT_WAIT_S", "5")
         )
@@ -498,14 +490,14 @@ class RayTrialExecutor:
         Args:
             error: Whether to mark this trial as terminated in error.
             exc: Optional exception.
+
         """
         self.set_status(trial, Trial.ERROR if error or exc else Trial.TERMINATED)
         self._trial_just_finished = True
         trial.set_location(_Location())
 
         try:
-            if exc:
-                trial.handle_error(exc=exc)
+            trial.write_error_log(exc=exc)
             if hasattr(trial, "runner") and trial.runner:
                 if (
                     not error
@@ -542,10 +534,7 @@ class RayTrialExecutor:
                         future = trial.runner.stop.remote()
 
                     pg = self._pg_manager.remove_from_in_use(trial)
-                    self._futures[future] = (
-                        _ExecutorEventType.STOP_RESULT,
-                        pg,
-                    )
+                    self._futures[future] = (_ExecutorEventType.STOP_RESULT, pg)
                     if self._trial_cleanup:  # force trial cleanup within a deadline
                         self._trial_cleanup.add(future)
 
@@ -602,53 +591,27 @@ class RayTrialExecutor:
         error: bool = False,
         exc: Optional[Union[TuneError, RayTaskError]] = None,
     ) -> None:
-        """Stops the trial, releasing held resources and removing futures related to
-        this trial from the execution queue.
-
-        Args:
-            trial: Trial to stop.
-            error: Whether to mark this trial as terminated in error. The trial status
-                will be set to either `Trial.ERROR` or `Trial.TERMINATED` based on this.
-                Defaults to False.
-            exc: Optional exception to log (as a reason for stopping). Defaults to None.
-        """
         prior_status = trial.status
+        self._stop_trial(trial, error=error or exc, exc=exc)
         if prior_status == Trial.RUNNING:
             logger.debug("Trial %s: Returning resources.", trial)
             out = self._find_future(trial)
             for result_id in out:
                 self._futures.pop(result_id)
-        trial.saving_to = None
-        trial.restoring_from = None
-        self._stop_trial(
-            trial,
-            error=error or exc,
-            exc=exc,
-        )
 
     def continue_training(self, trial: Trial) -> None:
         """Continues the training of this trial."""
         self._train(trial)
 
-    def pause_trial(self, trial: Trial, should_checkpoint: bool = True) -> None:
-        """Pauses the trial, releasing resources (specifically GPUs)
+    def pause_trial(self, trial: Trial) -> None:
+        """Pauses the trial.
 
-        We do this by:
-        1. Checkpoint the trial (if `should_checkpoint`) in memory to allow us to resume
-        from this state in the future. We may not always  want to checkpoint, if we
-        know that the checkpoint will not be used.
-        2. Stop the trial and release resources, see `RayTrialExecutor.stop_trial` above
-        3. Set the trial status to `Trial.PAUSED`, which is similar to
-        `Trial.TERMINATED`, except we have the intention of resuming the trial.
-
-        Args:
-            trial: Trial to pause.
-            should_checkpoint: Whether to save an in-memory checkpoint before stopping.
+        We want to release resources (specifically GPUs) when pausing an
+        experiment. This results in PAUSED state that similar to TERMINATED.
         """
         assert trial.status == Trial.RUNNING, trial.status
         try:
-            if should_checkpoint:
-                self.save(trial, CheckpointStorage.MEMORY)
+            self.save(trial, CheckpointStorage.MEMORY)
             self.stop_trial(trial)
             self.set_status(trial, Trial.PAUSED)
         except Exception:
@@ -750,10 +713,9 @@ class RayTrialExecutor:
                 next_future_to_clean = self._trial_cleanup.get_next()
                 if not next_future_to_clean:
                     break
-                if next_future_to_clean in self._futures:
+                if next_future_to_clean in self._futures.keys():
                     _, pg = self._futures.pop(next_future_to_clean)
-                    # Immediately clean this future
-                    _post_stop_cleanup(next_future_to_clean, pg, timeout=0.01)
+                    _post_stop_cleanup(next_future_to_clean, pg)
                 else:
                     # This just means that before the deadline reaches,
                     # the future is already cleaned up.
@@ -834,17 +796,8 @@ class RayTrialExecutor:
                 # If using cloud checkpointing, trial will get cp from cloud.
                 # If not syncing to driver, assume it has access to the cp
                 # on the local fs.
-                fallback_to_latest = bool(
-                    int(os.environ.get("TUNE_FALLBACK_TO_LATEST_CHECKPOINT", "1"))
-                )
-
                 with self._change_working_directory(trial):
-                    remote = trial.runner.restore.remote(
-                        checkpoint_dir,
-                        checkpoint_node_ip=node_ip,
-                        fallback_to_latest=fallback_to_latest,
-                    )
-
+                    remote = trial.runner.restore.remote(checkpoint_dir, node_ip)
             elif trial.sync_on_checkpoint:
                 # This provides FT backwards compatibility in the
                 # case where no cloud checkpoints are provided.
@@ -881,24 +834,18 @@ class RayTrialExecutor:
         return self._resource_updater.get_num_gpus() > 0
 
     def cleanup(self, trials: List[Trial]) -> None:
-        while self._futures:
+        while True:
             if self._trial_cleanup and self._trial_cleanup.is_empty():
                 break
-
-            # Non-blocking trial cleanup futures
+            elif not self._trial_cleanup and len(self._futures) == 0:
+                break
             self._do_force_trial_cleanup()
-
-            # Deal with other futures
             ready, _ = ray.wait(list(self._futures.keys()), timeout=0)
             if not ready:
                 continue
             event_type, trial_or_pg = self._futures.pop(ready[0])
-
-            # It could be STOP future after all, if so, deal with it here.
             if event_type == _ExecutorEventType.STOP_RESULT:
-                pg = trial_or_pg
-                # Blocking here is ok as the future returned
-                _post_stop_cleanup(ready[0], pg, timeout=None)
+                _post_stop_cleanup(ready[0], trial_or_pg)
 
         self._pg_manager.reconcile_placement_groups(trials)
         self._pg_manager.cleanup(force=True)
@@ -1041,8 +988,7 @@ class RayTrialExecutor:
             result_type, trial_or_pg = self._futures.pop(ready_future)
             if result_type == _ExecutorEventType.STOP_RESULT:
                 pg = trial_or_pg
-                # This will block, which is ok as the stop future returned
-                _post_stop_cleanup(ready_future, pg, timeout=None)
+                _post_stop_cleanup(ready_future, pg)
             else:
                 trial = trial_or_pg
                 assert isinstance(trial, Trial)

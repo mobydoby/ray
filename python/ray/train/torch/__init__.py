@@ -12,6 +12,7 @@ from ray.train.torch.config import TorchConfig
 from ray.train.torch.torch_predictor import TorchPredictor
 from ray.train.torch.torch_trainer import TorchTrainer
 from ray.train.torch.train_loop_utils import (
+    TorchWorkerProfiler,
     accelerate,
     backward,
     enable_reproducibility,
@@ -32,5 +33,6 @@ __all__ = [
     "prepare_data_loader",
     "backward",
     "enable_reproducibility",
+    "TorchWorkerProfiler",
     "TorchPredictor",
 ]

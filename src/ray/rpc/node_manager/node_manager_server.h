@@ -46,8 +46,7 @@ namespace rpc {
   RPC_SERVICE_HANDLER(NodeManagerService, GetSystemConfig, -1)        \
   RPC_SERVICE_HANDLER(NodeManagerService, ShutdownRaylet, -1)         \
   RPC_SERVICE_HANDLER(NodeManagerService, GetTasksInfo, -1)           \
-  RPC_SERVICE_HANDLER(NodeManagerService, GetObjectsInfo, -1)         \
-  RPC_SERVICE_HANDLER(NodeManagerService, GetTaskFailureCause, -1)
+  RPC_SERVICE_HANDLER(NodeManagerService, GetObjectsInfo, -1)
 
 /// Interface of the `NodeManagerService`, see `src/ray/protobuf/node_manager.proto`.
 class NodeManagerServiceHandler {
@@ -63,101 +62,97 @@ class NodeManagerServiceHandler {
   /// \param[out] reply The reply message.
   /// \param[in] send_reply_callback The callback to be called when the request is done.
 
-  virtual void HandleUpdateResourceUsage(rpc::UpdateResourceUsageRequest request,
+  virtual void HandleUpdateResourceUsage(const rpc::UpdateResourceUsageRequest &request,
                                          rpc::UpdateResourceUsageReply *reply,
                                          rpc::SendReplyCallback send_reply_callback) = 0;
 
   virtual void HandleRequestResourceReport(
-      rpc::RequestResourceReportRequest request,
+      const rpc::RequestResourceReportRequest &request,
       rpc::RequestResourceReportReply *reply,
       rpc::SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetResourceLoad(rpc::GetResourceLoadRequest request,
+  virtual void HandleGetResourceLoad(const rpc::GetResourceLoadRequest &request,
                                      rpc::GetResourceLoadReply *reply,
                                      rpc::SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleNotifyGCSRestart(rpc::NotifyGCSRestartRequest request,
+  virtual void HandleNotifyGCSRestart(const rpc::NotifyGCSRestartRequest &request,
                                       rpc::NotifyGCSRestartReply *reply,
                                       rpc::SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleRequestWorkerLease(RequestWorkerLeaseRequest request,
+  virtual void HandleRequestWorkerLease(const RequestWorkerLeaseRequest &request,
                                         RequestWorkerLeaseReply *reply,
                                         SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleReportWorkerBacklog(ReportWorkerBacklogRequest request,
+  virtual void HandleReportWorkerBacklog(const ReportWorkerBacklogRequest &request,
                                          ReportWorkerBacklogReply *reply,
                                          SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleReturnWorker(ReturnWorkerRequest request,
+  virtual void HandleReturnWorker(const ReturnWorkerRequest &request,
                                   ReturnWorkerReply *reply,
                                   SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleReleaseUnusedWorkers(ReleaseUnusedWorkersRequest request,
+  virtual void HandleReleaseUnusedWorkers(const ReleaseUnusedWorkersRequest &request,
                                           ReleaseUnusedWorkersReply *reply,
                                           SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleShutdownRaylet(ShutdownRayletRequest request,
+  virtual void HandleShutdownRaylet(const ShutdownRayletRequest &request,
                                     ShutdownRayletReply *reply,
                                     SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleCancelWorkerLease(rpc::CancelWorkerLeaseRequest request,
+  virtual void HandleCancelWorkerLease(const rpc::CancelWorkerLeaseRequest &request,
                                        rpc::CancelWorkerLeaseReply *reply,
                                        rpc::SendReplyCallback send_reply_callback) = 0;
 
   virtual void HandlePrepareBundleResources(
-      rpc::PrepareBundleResourcesRequest request,
+      const rpc::PrepareBundleResourcesRequest &request,
       rpc::PrepareBundleResourcesReply *reply,
       rpc::SendReplyCallback send_reply_callback) = 0;
 
   virtual void HandleCommitBundleResources(
-      rpc::CommitBundleResourcesRequest request,
+      const rpc::CommitBundleResourcesRequest &request,
       rpc::CommitBundleResourcesReply *reply,
       rpc::SendReplyCallback send_reply_callback) = 0;
 
   virtual void HandleCancelResourceReserve(
-      rpc::CancelResourceReserveRequest request,
+      const rpc::CancelResourceReserveRequest &request,
       rpc::CancelResourceReserveReply *reply,
       rpc::SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandlePinObjectIDs(PinObjectIDsRequest request,
+  virtual void HandlePinObjectIDs(const PinObjectIDsRequest &request,
                                   PinObjectIDsReply *reply,
                                   SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetNodeStats(GetNodeStatsRequest request,
+  virtual void HandleGetNodeStats(const GetNodeStatsRequest &request,
                                   GetNodeStatsReply *reply,
                                   SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGlobalGC(GlobalGCRequest request,
+  virtual void HandleGlobalGC(const GlobalGCRequest &request,
                               GlobalGCReply *reply,
                               SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleFormatGlobalMemoryInfo(FormatGlobalMemoryInfoRequest request,
+  virtual void HandleFormatGlobalMemoryInfo(const FormatGlobalMemoryInfoRequest &request,
                                             FormatGlobalMemoryInfoReply *reply,
                                             SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleRequestObjectSpillage(RequestObjectSpillageRequest request,
+  virtual void HandleRequestObjectSpillage(const RequestObjectSpillageRequest &request,
                                            RequestObjectSpillageReply *reply,
                                            SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleReleaseUnusedBundles(ReleaseUnusedBundlesRequest request,
+  virtual void HandleReleaseUnusedBundles(const ReleaseUnusedBundlesRequest &request,
                                           ReleaseUnusedBundlesReply *reply,
                                           SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetSystemConfig(GetSystemConfigRequest request,
+  virtual void HandleGetSystemConfig(const GetSystemConfigRequest &request,
                                      GetSystemConfigReply *reply,
                                      SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetTasksInfo(GetTasksInfoRequest request,
+  virtual void HandleGetTasksInfo(const GetTasksInfoRequest &request,
                                   GetTasksInfoReply *reply,
                                   SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetObjectsInfo(GetObjectsInfoRequest request,
+  virtual void HandleGetObjectsInfo(const GetObjectsInfoRequest &request,
                                     GetObjectsInfoReply *reply,
                                     SendReplyCallback send_reply_callback) = 0;
-
-  virtual void HandleGetTaskFailureCause(GetTaskFailureCauseRequest request,
-                                         GetTaskFailureCauseReply *reply,
-                                         SendReplyCallback send_reply_callback) = 0;
 };
 
 /// The `GrpcService` for `NodeManagerService`.

@@ -93,30 +93,6 @@ if not MOCK:
     tuner.fit()
     # __resources_pgf_end__
 
-    # __resources_lambda_start__
-    tuner = tune.Tuner(
-        tune.with_resources(
-            train_fn,
-            resources=lambda spec: {"GPU": 1} if spec.config.use_gpu else {"GPU": 0},
-        )
-    )
-    tuner.fit()
-    # __resources_lambda_end__
-
-    # __resources_scalingconfig_start__
-    tuner = tune.Tuner(
-        train_fn,
-        param_space={
-            "scaling_config": ScalingConfig(
-                trainer_resources=lambda spec: {"GPU": 1}
-                if spec.config.use_gpu
-                else {"GPU": 0}
-            )
-        },
-    )
-    tuner.fit()
-    # __resources_scalingconfig_end__
-
     metric = None
 
     # __modin_start__
@@ -297,11 +273,7 @@ if not MOCK:
                 source=local_dir,
                 target=remote_dir,
             )
-            try:
-                subprocess.check_call(cmd_str, shell=True)
-            except Exception as e:
-                print(f"Exception when syncing up {local_dir} to {remote_dir}: {e}")
-                return False
+            subprocess.check_call(cmd_str, shell=True)
             return True
 
         def sync_down(
@@ -311,22 +283,14 @@ if not MOCK:
                 source=remote_dir,
                 target=local_dir,
             )
-            try:
-                subprocess.check_call(cmd_str, shell=True)
-            except Exception as e:
-                print(f"Exception when syncing down {remote_dir} to {local_dir}: {e}")
-                return False
+            subprocess.check_call(cmd_str, shell=True)
             return True
 
         def delete(self, remote_dir: str) -> bool:
             cmd_str = self.delete_template.format(
                 target=remote_dir,
             )
-            try:
-                subprocess.check_call(cmd_str, shell=True)
-            except Exception as e:
-                print(f"Exception when deleting {remote_dir}: {e}")
-                return False
+            subprocess.check_call(cmd_str, shell=True)
             return True
 
         def retry(self):

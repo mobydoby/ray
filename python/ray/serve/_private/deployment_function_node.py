@@ -58,7 +58,6 @@ class DeploymentFunctionNode(DAGNode):
                 init_args=(),
                 init_kwargs={},
                 route_prefix=route_prefix,
-                _internal=True,
             )
         else:
             self._deployment: Deployment = Deployment(

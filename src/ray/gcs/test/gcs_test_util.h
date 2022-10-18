@@ -55,7 +55,6 @@ struct Mocker {
                               TaskID::Nil(),
                               owner_address,
                               1,
-                              false,
                               required_resources,
                               required_placement_resources,
                               "",

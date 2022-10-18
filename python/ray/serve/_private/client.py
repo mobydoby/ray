@@ -7,12 +7,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, U
 
 import ray
 from ray.actor import ActorHandle
-from ray.serve._private.common import (
-    DeploymentInfo,
-    DeploymentStatus,
-    StatusOverview,
-    ApplicationStatus,
-)
+from ray.serve._private.common import DeploymentInfo, DeploymentStatus, StatusOverview
 from ray.serve.config import DeploymentConfig, HTTPOptions, ReplicaConfig
 from ray.serve._private.constants import (
     CLIENT_POLLING_INTERVAL_S,
@@ -257,7 +252,6 @@ class ServeControllerClient:
                     config=deployment["config"],
                     version=deployment["version"],
                     route_prefix=deployment["route_prefix"],
-                    is_driver_deployment=deployment["is_driver_deployment"],
                 )
             )
 
@@ -293,24 +287,8 @@ class ServeControllerClient:
             self.delete_deployments(deployment_names_to_delete, blocking=_blocking)
 
     @_ensure_connected
-    def deploy_app(
-        self, config: ServeApplicationSchema, _blocking: bool = False
-    ) -> None:
+    def deploy_app(self, config: ServeApplicationSchema) -> None:
         ray.get(self._controller.deploy_app.remote(config))
-
-        if _blocking:
-            timeout_s = 60
-
-            start = time.time()
-            while time.time() - start < timeout_s:
-                curr_status = self.get_serve_status()
-                if curr_status.app_status.status == ApplicationStatus.RUNNING:
-                    break
-                time.sleep(CLIENT_POLLING_INTERVAL_S)
-            else:
-                raise TimeoutError(
-                    f"Serve application isn't running after {timeout_s}s."
-                )
 
     @_ensure_connected
     def delete_deployments(self, names: Iterable[str], blocking: bool = True) -> None:
@@ -430,7 +408,6 @@ class ServeControllerClient:
         config: Optional[Union[DeploymentConfig, Dict[str, Any]]] = None,
         version: Optional[str] = None,
         route_prefix: Optional[str] = None,
-        is_driver_deployment: Optional[str] = None,
     ) -> Dict:
         """
         Takes a deployment's configuration, and returns the arguments needed
@@ -485,7 +462,6 @@ class ServeControllerClient:
             "replica_config_proto_bytes": replica_config.to_proto_bytes(),
             "route_prefix": route_prefix,
             "deployer_job_id": ray.get_runtime_context().job_id,
-            "is_driver_deployment": is_driver_deployment,
         }
 
         return controller_deploy_args

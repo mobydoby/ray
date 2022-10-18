@@ -677,11 +677,9 @@ class PlacementGroupInfoAccessor {
   /// The RPC will timeout after the default GCS RPC timeout is exceeded.
   ///
   /// \param placement_group_id The id for the placement group to wait for until ready.
-  /// \param timeout_seconds The timeout in seconds.
   /// \return Status. TimedOut if the RPC times out. NotFound if the placement has already
   /// removed.
-  virtual Status SyncWaitUntilReady(const PlacementGroupID &placement_group_id,
-                                    int64_t timeout_seconds);
+  virtual Status SyncWaitUntilReady(const PlacementGroupID &placement_group_id);
 
  private:
   GcsClient *client_impl_;

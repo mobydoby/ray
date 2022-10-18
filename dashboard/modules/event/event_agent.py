@@ -85,7 +85,9 @@ class EventAgent(dashboard_utils.DashboardAgentModule):
         self._stub = await self._connect_to_dashboard()
         # Start monitor task.
         self._monitor = monitor_events(
-            self._event_dir, lambda data: create_task(self._cached_events.put(data))
+            self._event_dir,
+            lambda data: create_task(self._cached_events.put(data)),
+            source_types=event_consts.EVENT_AGENT_MONITOR_SOURCE_TYPES,
         )
         # Start reporting events.
         await self.report_events()

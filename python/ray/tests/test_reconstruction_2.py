@@ -11,10 +11,10 @@ from ray._private.internal_api import memory_summary
 from ray._private.test_utils import Semaphore, SignalActor, wait_for_condition
 
 # Task status.
-WAITING_FOR_DEPENDENCIES = "PENDING_ARGS_AVAIL"
-SCHEDULED = "PENDING_NODE_ASSIGNMENT"
+WAITING_FOR_DEPENDENCIES = "WAITING_FOR_DEPENDENCIES"
+SCHEDULED = "SCHEDULED"
 FINISHED = "FINISHED"
-WAITING_FOR_EXECUTION = "SUBMITTED_TO_WORKER"
+WAITING_FOR_EXECUTION = "WAITING_FOR_EXECUTION"
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Failing on Windows.")

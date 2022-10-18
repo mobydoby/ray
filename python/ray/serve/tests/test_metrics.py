@@ -46,7 +46,6 @@ def test_serve_metrics_for_successful_connection(serve_instance):
             "serve_deployment_processing_latency_ms",
             # gauge
             "serve_replica_processing_queries",
-            "serve_deployment_replica_healthy",
             # handle
             "serve_handle_request_counter",
         ]
@@ -160,7 +159,7 @@ def test_actor_summary(serve_instance):
         pass
 
     serve.run(f.bind())
-    actors = state_api.list_actors(filters=[("state", "=", "ALIVE")])
+    actors = state_api.list_actors()
     class_names = {actor["class_name"] for actor in actors}
     assert class_names.issuperset(
         {"ServeController", "HTTPProxyActor", "ServeReplica:f"}

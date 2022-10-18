@@ -15,7 +15,6 @@ import os
 import random
 
 import ray
-from ray import air
 from ray import tune
 from ray.rllib.algorithms.ppo import PPO
 from ray.rllib.examples.env.multi_agent import MultiAgentCartPole
@@ -89,20 +88,17 @@ if __name__ == "__main__":
     }
 
     # Do some training and store the checkpoint.
-    results = tune.Tuner(
+    results = tune.run(
         "PPO",
-        param_space=config,
-        run_config=air.RunConfig(
-            stop={"training_iteration": args.pre_training_iters},
-            verbose=1,
-            checkpoint_config=air.CheckpointConfig(
-                checkpoint_frequency=1, checkpoint_at_end=True
-            ),
-        ),
-    ).fit()
+        config=config,
+        stop={"training_iteration": args.pre_training_iters},
+        verbose=1,
+        checkpoint_freq=1,
+        checkpoint_at_end=True,
+    )
     print("Pre-training done.")
 
-    best_checkpoint = results.get_best_result().checkpoint
+    best_checkpoint = results.get_best_checkpoint(results.trials[0], mode="max")
     print(f".. best checkpoint was: {best_checkpoint}")
 
     # Create a new dummy Algorithm to "fix" our checkpoint.
@@ -125,7 +121,7 @@ if __name__ == "__main__":
         f"except policy_0): {new_checkpoint}"
     )
 
-    print("Starting new tune.Tuner().fit()")
+    print("Starting new tune.run")
 
     # Start our actual experiment.
     stop = {
@@ -143,8 +139,8 @@ if __name__ == "__main__":
         "PPO",
         stop=stop,
         config=config,
-        restore=new_checkpoint,
         verbose=1,
+        restore=new_checkpoint,
     )
 
     if args.as_test:

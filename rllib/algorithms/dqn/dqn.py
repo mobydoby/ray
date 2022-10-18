@@ -77,16 +77,15 @@ class DQNConfig(SimpleQConfig):
 
     Example:
         >>> from ray.rllib.algorithms.dqn.dqn import DQNConfig
-        >>> from ray import air
         >>> from ray import tune
         >>> config = DQNConfig()
         >>> config.training(num_atoms=tune.grid_search(list(range(1,11)))
         >>> config.environment(env="CartPole-v1")
-        >>> tune.Tuner(
+        >>> tune.run(
         >>>     "DQN",
-        >>>     run_config=air.RunConfig(stop={"episode_reward_mean":200}),
-        >>>     param_space=config.to_dict()
-        >>> ).fit()
+        >>>     stop={"episode_reward_mean":200},
+        >>>     config=config.to_dict()
+        >>> )
 
     Example:
         >>> from ray.rllib.algorithms.dqn.dqn import DQNConfig
@@ -134,8 +133,6 @@ class DQNConfig(SimpleQConfig):
         self.n_step = 1
         self.before_learn_on_batch = None
         self.training_intensity = None
-        self.td_error_loss_fn = "huber"
-        self.categorical_distribution_temperature = 1.0
 
         # Changes to SimpleQConfig's default:
         self.replay_buffer_config = {
@@ -179,8 +176,6 @@ class DQNConfig(SimpleQConfig):
         ] = None,
         training_intensity: Optional[float] = None,
         replay_buffer_config: Optional[dict] = None,
-        td_error_loss_fn: Optional[str] = None,
-        categorical_distribution_temperature: Optional[float] = None,
         **kwargs,
     ) -> "DQNConfig":
         """Sets the training related configuration.
@@ -250,13 +245,6 @@ class DQNConfig(SimpleQConfig):
                 prioritized_replay_eps: Epsilon parameter sets the baseline probability
                 for sampling so that when the temporal-difference error of a sample is
                 zero, there is still a chance of drawing the sample.
-            td_error_loss_fn: "huber" or "mse". loss function for calculating TD error
-                when num_atoms is 1. Note that if num_atoms is > 1, this parameter
-                is simply ignored, and softmax cross entropy loss will be used.
-            categorical_distribution_temperature: Set the temperature parameter used
-                by Categorical action distribution. A valid temperature is in the range
-                of [0, 1]. Note that this mostly affects evaluation since TD error uses
-                argmax for return calculation.
 
         Returns:
             This updated AlgorithmConfig object.
@@ -288,16 +276,6 @@ class DQNConfig(SimpleQConfig):
             self.training_intensity = training_intensity
         if replay_buffer_config is not None:
             self.replay_buffer_config = replay_buffer_config
-        if td_error_loss_fn is not None:
-            self.td_error_loss_fn = td_error_loss_fn
-            assert self.td_error_loss_fn in [
-                "huber",
-                "mse",
-            ], "td_error_loss_fn must be 'huber' or 'mse'."
-        if categorical_distribution_temperature is not None:
-            self.categorical_distribution_temperature = (
-                categorical_distribution_temperature
-            )
 
         return self
 
@@ -333,7 +311,7 @@ class DQN(SimpleQ):
     @classmethod
     @override(SimpleQ)
     def get_default_config(cls) -> AlgorithmConfigDict:
-        return DQNConfig().to_dict()
+        return DEFAULT_CONFIG
 
     @override(SimpleQ)
     def validate_config(self, config: AlgorithmConfigDict) -> None:
@@ -385,7 +363,7 @@ class DQN(SimpleQ):
             self._counters[NUM_ENV_STEPS_SAMPLED] += new_sample_batch.env_steps()
 
             # Store new samples in replay buffer.
-            self.local_replay_buffer.add(new_sample_batch)
+            self.local_replay_buffer.add_batch(new_sample_batch)
 
         global_vars = {
             "timestep": self._counters[NUM_ENV_STEPS_SAMPLED],
@@ -455,7 +433,7 @@ class _deprecated_default_config(dict):
     @Deprecated(
         old="ray.rllib.algorithms.dqn.dqn.DEFAULT_CONFIG",
         new="ray.rllib.algorithms.dqn.dqn.DQNConfig(...)",
-        error=True,
+        error=False,
     )
     def __getitem__(self, item):
         return super().__getitem__(item)
@@ -464,6 +442,6 @@ class _deprecated_default_config(dict):
 DEFAULT_CONFIG = _deprecated_default_config()
 
 
-@Deprecated(new="Sub-class directly from `DQN` and override its methods", error=True)
+@Deprecated(new="Sub-class directly from `DQN` and override its methods", error=False)
 class GenericOffPolicyTrainer(SimpleQ):
     pass

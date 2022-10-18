@@ -125,7 +125,6 @@ from ray._raylet import (  # noqa: E402
     FunctionID,
     ObjectID,
     ObjectRef,
-    ObjectRefGenerator,
     TaskID,
     UniqueID,
     Language,
@@ -187,11 +186,14 @@ class _DeprecationWrapper(object):
     def __getattr__(self, attr):
         value = getattr(self._real_worker, attr)
         if attr not in self._warned:
+            import traceback
+
             self._warned.add(attr)
             logger.warning(
                 f"DeprecationWarning: `ray.{self._name}.{attr}` is a private "
                 "attribute and access will be removed in a future Ray version."
             )
+            traceback.print_stack()
         return value
 
 
@@ -249,7 +251,6 @@ __all__ += [
     "FunctionID",
     "ObjectID",
     "ObjectRef",
-    "ObjectRefGenerator",
     "TaskID",
     "UniqueID",
     "PlacementGroupID",

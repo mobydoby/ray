@@ -28,19 +28,19 @@ class GcsWorkerManager : public rpc::WorkerInfoHandler {
                             std::shared_ptr<GcsPublisher> &gcs_publisher)
       : gcs_table_storage_(gcs_table_storage), gcs_publisher_(gcs_publisher) {}
 
-  void HandleReportWorkerFailure(rpc::ReportWorkerFailureRequest request,
+  void HandleReportWorkerFailure(const rpc::ReportWorkerFailureRequest &request,
                                  rpc::ReportWorkerFailureReply *reply,
                                  rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleGetWorkerInfo(rpc::GetWorkerInfoRequest request,
+  void HandleGetWorkerInfo(const rpc::GetWorkerInfoRequest &request,
                            rpc::GetWorkerInfoReply *reply,
                            rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleGetAllWorkerInfo(rpc::GetAllWorkerInfoRequest request,
+  void HandleGetAllWorkerInfo(const rpc::GetAllWorkerInfoRequest &request,
                               rpc::GetAllWorkerInfoReply *reply,
                               rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleAddWorkerInfo(rpc::AddWorkerInfoRequest request,
+  void HandleAddWorkerInfo(const rpc::AddWorkerInfoRequest &request,
                            rpc::AddWorkerInfoReply *reply,
                            rpc::SendReplyCallback send_reply_callback) override;
 

@@ -40,23 +40,18 @@ class XGBoostCheckpoint(Checkpoint):
             An :py:class:`XGBoostCheckpoint` containing the specified ``Estimator``.
 
         Examples:
-            >>> import numpy as np
-            >>> import ray
             >>> from ray.train.xgboost import XGBoostCheckpoint
             >>> import xgboost
             >>>
-            >>> train_X = np.array([[1, 2], [3, 4]])
-            >>> train_y = np.array([0, 1])
-            >>>
-            >>> model = xgboost.XGBClassifier().fit(train_X, train_y)
-            >>> checkpoint = XGBoostCheckpoint.from_model(model.get_booster())
+            >>> booster = xgboost.Booster()
+            >>> checkpoint = XGBoostCheckpoint.from_model(booster)  # doctest: +SKIP # noqa: E501
 
             You can use a :py:class:`XGBoostCheckpoint` to create an
             :py:class:`~ray.train.xgboost.XGBoostPredictor` and preform inference.
 
             >>> from ray.train.xgboost import XGBoostPredictor
             >>>
-            >>> predictor = XGBoostPredictor.from_checkpoint(checkpoint)
+            >>> predictor = XGBoostPredictor.from_checkpoint(checkpoint)  # doctest: +SKIP # noqa: E501
         """
         with tempfile.TemporaryDirectory() as tmpdirname:
             booster.save_model(os.path.join(tmpdirname, MODEL_KEY))

@@ -377,7 +377,7 @@ void GcsPlacementGroupManager::SchedulePendingPlacementGroups() {
 }
 
 void GcsPlacementGroupManager::HandleCreatePlacementGroup(
-    ray::rpc::CreatePlacementGroupRequest request,
+    const ray::rpc::CreatePlacementGroupRequest &request,
     ray::rpc::CreatePlacementGroupReply *reply,
     ray::rpc::SendReplyCallback send_reply_callback) {
   const JobID &job_id =
@@ -401,7 +401,7 @@ void GcsPlacementGroupManager::HandleCreatePlacementGroup(
 }
 
 void GcsPlacementGroupManager::HandleRemovePlacementGroup(
-    rpc::RemovePlacementGroupRequest request,
+    const rpc::RemovePlacementGroupRequest &request,
     rpc::RemovePlacementGroupReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   const auto placement_group_id =
@@ -496,7 +496,7 @@ void GcsPlacementGroupManager::RemovePlacementGroup(
 }
 
 void GcsPlacementGroupManager::HandleGetPlacementGroup(
-    rpc::GetPlacementGroupRequest request,
+    const rpc::GetPlacementGroupRequest &request,
     rpc::GetPlacementGroupReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   PlacementGroupID placement_group_id =
@@ -529,7 +529,7 @@ void GcsPlacementGroupManager::HandleGetPlacementGroup(
 }
 
 void GcsPlacementGroupManager::HandleGetNamedPlacementGroup(
-    rpc::GetNamedPlacementGroupRequest request,
+    const rpc::GetNamedPlacementGroupRequest &request,
     rpc::GetNamedPlacementGroupReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   const std::string &name = request.name();
@@ -554,7 +554,7 @@ void GcsPlacementGroupManager::HandleGetNamedPlacementGroup(
 }
 
 void GcsPlacementGroupManager::HandleGetAllPlacementGroup(
-    rpc::GetAllPlacementGroupRequest request,
+    const rpc::GetAllPlacementGroupRequest &request,
     rpc::GetAllPlacementGroupReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   auto limit = request.has_limit() ? request.limit() : -1;
@@ -598,7 +598,7 @@ void GcsPlacementGroupManager::HandleGetAllPlacementGroup(
 }
 
 void GcsPlacementGroupManager::HandleWaitPlacementGroupUntilReady(
-    rpc::WaitPlacementGroupUntilReadyRequest request,
+    const rpc::WaitPlacementGroupUntilReadyRequest &request,
     rpc::WaitPlacementGroupUntilReadyReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   PlacementGroupID placement_group_id =

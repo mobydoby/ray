@@ -203,16 +203,11 @@ if __name__ == "__main__":
     # Run the training experiment.
     importlib.invalidate_caches()
     import ray
-    from ray import air
     from ray import tune
 
     ray.init()
 
-    results = tune.Tuner(
-        run,
-        run_config=air.RunConfig(stop=stop),
-        param_space=config,
-    ).fit()
+    results = tune.run(run, stop=stop, config=config)
     last_results = [t.last_result for t in results.trials]
 
     # Criterion is to have reached some min reward within given

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 
 from ray.rllib.connectors.connector import (
     ActionConnector,
@@ -26,7 +26,6 @@ class ClipActionsConnector(ActionConnector):
         return ActionConnectorDataType(
             ac_data.env_id,
             ac_data.agent_id,
-            ac_data.input_dict,
             (clip_action(actions, self._action_space_struct), states, fetches),
         )
 
@@ -34,7 +33,7 @@ class ClipActionsConnector(ActionConnector):
         return ClipActionsConnector.__name__, None
 
     @staticmethod
-    def from_state(ctx: ConnectorContext, params: Any):
+    def from_state(ctx: ConnectorContext, params: List[Any]):
         return ClipActionsConnector(ctx)
 
 

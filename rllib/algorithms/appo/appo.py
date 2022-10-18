@@ -49,7 +49,6 @@ class APPOConfig(ImpalaConfig):
 
     Example:
         >>> from ray.rllib.algorithms.appo import APPOConfig
-        >>> from ray import air
         >>> from ray import tune
         >>> config = APPOConfig()
         >>> # Print out some default values.
@@ -60,11 +59,11 @@ class APPOConfig(ImpalaConfig):
         >>> config.environment(env="CartPole-v1")
         >>> # Use to_dict() to get the old-style python config dict
         >>> # when running with tune.
-        >>> tune.Tuner(
+        >>> tune.run(
         ...     "APPO",
-        ...     run_config=air.RunConfig(stop={"episode_reward_mean": 200}),
-        ...     param_space=config.to_dict(),
-        ... ).fit()
+        ...     stop={"episode_reward_mean": 200},
+        ...     config=config.to_dict(),
+        ... )
     """
 
     def __init__(self, algo_class=None):
@@ -209,7 +208,7 @@ class APPO(Impala):
         # Before init: Add the update target and kl hook.
         # This hook is called explicitly after each learner step in the
         # execution setup for IMPALA.
-        if config.get("_disable_execution_plan_api", True) is False:
+        if config.get("_disable_execution_plan_api", False) is False:
             config["after_train_step"] = UpdateTargetAndKL
 
         super().setup(config)
@@ -308,7 +307,7 @@ class _deprecated_default_config(dict):
     @Deprecated(
         old="ray.rllib.agents.ppo.appo::DEFAULT_CONFIG",
         new="ray.rllib.algorithms.appo.appo::APPOConfig(...)",
-        error=True,
+        error=False,
     )
     def __getitem__(self, item):
         return super().__getitem__(item)

@@ -1,7 +1,6 @@
 import pytest
 
 import ray
-from ray import air
 from ray import tune
 
 
@@ -28,12 +27,13 @@ def test_custom_resource(algorithm):
 
     stop = {"training_iteration": 1}
 
-    tune.Tuner(
+    tune.run(
         algorithm,
-        param_space=config,
-        run_config=air.RunConfig(stop=stop, verbose=0),
-        tune_config=tune.TuneConfig(num_samples=1),
-    ).fit()
+        config=config,
+        stop=stop,
+        num_samples=1,
+        verbose=0,
+    )
 
 
 if __name__ == "__main__":

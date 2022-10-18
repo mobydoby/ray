@@ -231,31 +231,31 @@ class GcsActorManager : public rpc::ActorInfoHandler {
 
   ~GcsActorManager() = default;
 
-  void HandleRegisterActor(rpc::RegisterActorRequest request,
+  void HandleRegisterActor(const rpc::RegisterActorRequest &request,
                            rpc::RegisterActorReply *reply,
                            rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleCreateActor(rpc::CreateActorRequest request,
+  void HandleCreateActor(const rpc::CreateActorRequest &request,
                          rpc::CreateActorReply *reply,
                          rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleGetActorInfo(rpc::GetActorInfoRequest request,
+  void HandleGetActorInfo(const rpc::GetActorInfoRequest &request,
                           rpc::GetActorInfoReply *reply,
                           rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleGetNamedActorInfo(rpc::GetNamedActorInfoRequest request,
+  void HandleGetNamedActorInfo(const rpc::GetNamedActorInfoRequest &request,
                                rpc::GetNamedActorInfoReply *reply,
                                rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleListNamedActors(rpc::ListNamedActorsRequest request,
+  void HandleListNamedActors(const rpc::ListNamedActorsRequest &request,
                              rpc::ListNamedActorsReply *reply,
                              rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleGetAllActorInfo(rpc::GetAllActorInfoRequest request,
+  void HandleGetAllActorInfo(const rpc::GetAllActorInfoRequest &request,
                              rpc::GetAllActorInfoReply *reply,
                              rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleKillActorViaGcs(rpc::KillActorViaGcsRequest request,
+  void HandleKillActorViaGcs(const rpc::KillActorViaGcsRequest &request,
                              rpc::KillActorViaGcsReply *reply,
                              rpc::SendReplyCallback send_reply_callback) override;
 

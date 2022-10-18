@@ -45,8 +45,3 @@ TimeoutStopper (tune.stopper.TimeoutStopper)
 --------------------------------------------
 
 .. autoclass:: ray.tune.stopper.TimeoutStopper
-
-CombinedStopper (tune.stopper.CombinedStopper)
-----------------------------------------------
-
-.. autoclass:: ray.tune.stopper.CombinedStopper

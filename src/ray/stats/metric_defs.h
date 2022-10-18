@@ -42,9 +42,6 @@ namespace stats {
 /// ray_[component]_[metrics_name]_total (e.g., ray_pull_manager_total)
 ///
 
-/// Task stats from core workers.
-DECLARE_stats(tasks);
-
 /// Event stats
 DECLARE_stats(operation_count);
 DECLARE_stats(operation_run_time_ms);
@@ -81,10 +78,6 @@ DECLARE_stats(scheduler_failed_worker_startup_total);
 DECLARE_stats(scheduler_tasks);
 DECLARE_stats(scheduler_unscheduleable_tasks);
 
-/// Raylet Resource Manager
-DECLARE_stats(resources);
-
-/// TODO(rickyx): migrate legacy metrics
 /// Local Object Manager
 DECLARE_stats(spill_manager_objects);
 DECLARE_stats(spill_manager_objects_bytes);
@@ -94,9 +87,6 @@ DECLARE_stats(spill_manager_throughput_mb);
 /// GCS Storage
 DECLARE_stats(gcs_storage_operation_latency_ms);
 DECLARE_stats(gcs_storage_operation_count);
-
-/// Object Store
-DECLARE_stats(object_store_memory);
 
 /// Placement Group
 DECLARE_stats(gcs_placement_group_creation_latency_ms);
@@ -126,10 +116,10 @@ static Histogram GcsLatency("gcs_latency",
 ///
 
 /// Raylet Resource Manager
-static Gauge TestMetrics("local_available_resource",
-                         "The available resources on this node.",
-                         "",
-                         {ResourceNameKey});
+static Gauge LocalAvailableResource("local_available_resource",
+                                    "The available resources on this node.",
+                                    "",
+                                    {ResourceNameKey});
 
 static Gauge LocalTotalResource("local_total_resource",
                                 "The total resources on this node.",

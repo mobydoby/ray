@@ -8,7 +8,6 @@ import re
 import threading
 from dataclasses import dataclass
 from datetime import datetime
-from io import StringIO
 from numbers import Number, Real
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -66,8 +65,6 @@ NodeIP = str
 # Number of nodes to launch
 NodeCount = int
 
-Usage = Dict[str, Tuple[Number, Number]]
-
 logger = logging.getLogger(__name__)
 
 
@@ -84,7 +81,7 @@ def is_placement_group_resource(resource_name: str) -> bool:
 @dataclass
 class LoadMetricsSummary:
     # Map of resource name (e.g. "memory") to pair of (Used, Available) numbers
-    usage: Usage
+    usage: Dict[str, Tuple[Number, Number]]
     # Counts of demand bundles from task/actor demand.
     # e.g. [({"CPU": 1}, 5), ({"GPU":1}, 2)]
     resource_demand: List[DictCount]
@@ -93,12 +90,8 @@ class LoadMetricsSummary:
     # Counts of demand bundles requested by autoscaler.sdk.request_resources
     request_demand: List[DictCount]
     node_types: List[DictCount]
-    # Optionally included for backwards compatibility: IP of the head node. See
-    # https://github.com/ray-project/ray/pull/20623 for details.
+    # Optionally included for backwards compatibility: IP of the head node.
     head_ip: Optional[NodeIP] = None
-    # Optionally included for backwards compatibility: Resource breakdown by
-    # node. Mapping from node id to resource usage.
-    usage_by_node: Optional[Dict[str, Usage]] = None
 
 
 class ConcurrentCounter:
@@ -529,11 +522,11 @@ def parse_placement_group_resource_str(
     return (placement_group_resource_str, None, True)
 
 
-def parse_usage(usage: Usage) -> List[str]:
+def get_usage_report(lm_summary: LoadMetricsSummary) -> str:
     # first collect resources used in placement groups
     placement_group_resource_usage = {}
     placement_group_resource_total = collections.defaultdict(float)
-    for resource, (used, total) in usage.items():
+    for resource, (used, total) in lm_summary.usage.items():
         (pg_resource_name, pg_name, is_countable) = parse_placement_group_resource_str(
             resource
         )
@@ -544,8 +537,9 @@ def parse_usage(usage: Usage) -> List[str]:
                 placement_group_resource_usage[pg_resource_name] += used
                 placement_group_resource_total[pg_resource_name] += total
             continue
+
     usage_lines = []
-    for resource, (used, total) in sorted(usage.items()):
+    for resource, (used, total) in sorted(lm_summary.usage.items()):
         if "node:" in resource:
             continue  # Skip the auto-added per-node "node:<ip>" resource.
 
@@ -567,7 +561,7 @@ def parse_usage(usage: Usage) -> List[str]:
 
         if resource in ["memory", "object_store_memory"]:
             to_GiB = 1 / 2 ** 30
-            line = f"{(used * to_GiB):.2f}/" f"{(total * to_GiB):.3f} GiB {resource}"
+            line = f" {(used * to_GiB):.2f}/" f"{(total * to_GiB):.3f} GiB {resource}"
             if used_in_pg:
                 line = line + (
                     f" ({(pg_used * to_GiB):.2f} used of "
@@ -575,22 +569,14 @@ def parse_usage(usage: Usage) -> List[str]:
                 )
             usage_lines.append(line)
         else:
-            line = f"{used}/{total} {resource}"
+            line = f" {used}/{total} {resource}"
             if used_in_pg:
                 line += (
                     f" ({pg_used} used of " f"{pg_total} reserved in placement groups)"
                 )
             usage_lines.append(line)
-    return usage_lines
-
-
-def get_usage_report(lm_summary: LoadMetricsSummary) -> str:
-    usage_lines = parse_usage(lm_summary.usage)
-
-    sio = StringIO()
-    for line in usage_lines:
-        print(f" {line}", file=sio)
-    return sio.getvalue()
+    usage_report = "\n".join(usage_lines)
+    return usage_report
 
 
 def format_resource_demand_summary(
@@ -661,42 +647,11 @@ def get_demand_report(lm_summary: LoadMetricsSummary):
     return demand_report
 
 
-def get_per_node_breakdown(lm_summary: LoadMetricsSummary):
-    sio = StringIO()
-
-    print(file=sio)
-    for node_ip, usage in lm_summary.usage_by_node.items():
-        print(file=sio)  # Print a newline.
-        print(f"Node: {node_ip}", file=sio)
-        print(" Usage:", file=sio)
-        for line in parse_usage(usage):
-            print(f"  {line}", file=sio)
-
-    return sio.getvalue()
-
-
-def format_info_string(
-    lm_summary,
-    autoscaler_summary,
-    time=None,
-    gcs_request_time: Optional[float] = None,
-    non_terminated_nodes_time: Optional[float] = None,
-    verbose: bool = False,
-):
+def format_info_string(lm_summary, autoscaler_summary, time=None):
     if time is None:
         time = datetime.now()
     header = "=" * 8 + f" Autoscaler status: {time} " + "=" * 8
     separator = "-" * len(header)
-    if verbose:
-        header += "\n"
-        if gcs_request_time:
-            header += f"GCS request time: {gcs_request_time:3f}s\n"
-        if non_terminated_nodes_time:
-            header += (
-                "Node Provider non_terminated_nodes time: "
-                f"{non_terminated_nodes_time:3f}s\n"
-            )
-
     available_node_report_lines = []
     for node_type, count in autoscaler_summary.active_nodes.items():
         line = f" {count} {node_type}"
@@ -762,15 +717,13 @@ Pending:
 
 Resources
 {separator}
-{"Total " if verbose else ""}Usage:
+Usage:
 {usage_report}
-{"Total " if verbose else ""}Demands:
+
+Demands:
 {demand_report}"""
 
-    if verbose and lm_summary.usage_by_node:
-        formatted_output += get_per_node_breakdown(lm_summary)
-
-    return formatted_output.strip()
+    return formatted_output
 
 
 def format_readonly_node_type(node_id: str):

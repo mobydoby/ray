@@ -9,7 +9,6 @@ from transformers.pipelines.table_question_answering import (
 
 from ray.air.checkpoint import Checkpoint
 from ray.air.constants import TENSOR_COLUMN_NAME
-from ray.air.data_batch_type import DataBatchType
 from ray.train.predictor import Predictor
 from ray.util.annotations import PublicAPI
 
@@ -115,12 +114,12 @@ class HuggingFacePredictor(Predictor):
             columns = columns[0]
         return columns
 
-    def predict(
+    def _predict_pandas(
         self,
-        data: DataBatchType,
-        feature_columns: Optional[Union[List[str], List[int]]] = None,
-        **predict_kwargs,
-    ) -> DataBatchType:
+        data: "pd.DataFrame",
+        feature_columns: Optional[List[str]] = None,
+        **pipeline_call_kwargs,
+    ) -> "pd.DataFrame":
         """Run inference on data batch.
 
         The data is converted into a list (unless ``pipeline`` is a
@@ -137,42 +136,35 @@ class HuggingFacePredictor(Predictor):
                 ``pipeline`` object.
 
         Examples:
-            >>> import pandas as pd
-            >>> from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
-            >>> from transformers.pipelines import pipeline
-            >>> from ray.train.huggingface import HuggingFacePredictor
-            >>>
-            >>> model_checkpoint = "gpt2"
-            >>> tokenizer_checkpoint = "sgugger/gpt2-like-tokenizer"
-            >>> tokenizer = AutoTokenizer.from_pretrained(tokenizer_checkpoint)
-            >>>
-            >>> model_config = AutoConfig.from_pretrained(model_checkpoint)
-            >>> model = AutoModelForCausalLM.from_config(model_config)
-            >>> predictor = HuggingFacePredictor(
-            ...     pipeline=pipeline(
-            ...         task="text-generation", model=model, tokenizer=tokenizer
-            ...     )
-            ... )
-            >>>
-            >>> prompts = pd.DataFrame(
-            ...     ["Complete me", "And me", "Please complete"], columns=["sentences"]
-            ... )
-            >>> predictions = predictor.predict(prompts)
+
+        .. code-block:: python
+
+            import pandas as pd
+            from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+            from transformers.pipelines import pipeline
+            from ray.train.huggingface import HuggingFacePredictor
+
+            model_checkpoint = "gpt2"
+            tokenizer_checkpoint = "sgugger/gpt2-like-tokenizer"
+            tokenizer = AutoTokenizer.from_pretrained(tokenizer_checkpoint)
+
+            model_config = AutoConfig.from_pretrained(model_checkpoint)
+            model = AutoModelForCausalLM.from_config(model_config)
+            predictor = HuggingFacePredictor(
+                pipeline=pipeline(
+                    task="text-generation", model=model, tokenizer=tokenizer
+                )
+            )
+
+            prompts = pd.DataFrame(
+                ["Complete me", "And me", "Please complete"], columns=["sentences"]
+            )
+            predictions = predictor.predict(prompts)
 
 
         Returns:
             Prediction result.
         """
-        return Predictor.predict(
-            self, data, feature_columns=feature_columns, **predict_kwargs
-        )
-
-    def _predict_pandas(
-        self,
-        data: "pd.DataFrame",
-        feature_columns: Optional[List[str]] = None,
-        **pipeline_call_kwargs,
-    ) -> "pd.DataFrame":
         if TENSOR_COLUMN_NAME in data:
             arr = data[TENSOR_COLUMN_NAME].to_numpy()
             if feature_columns:

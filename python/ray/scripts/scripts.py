@@ -1863,16 +1863,8 @@ def memory(
     default=ray_constants.REDIS_DEFAULT_PASSWORD,
     help="Connect to ray with redis_password.",
 )
-@click.option(
-    "-v",
-    "--verbose",
-    required=False,
-    is_flag=True,
-    hidden=True,
-    help="Experimental: Display additional debuggging information.",
-)
 @PublicAPI
-def status(address: str, redis_password: str, verbose: bool):
+def status(address, redis_password):
     """Print cluster status, including autoscaling info."""
     address = services.canonicalize_bootstrap_address_or_die(address)
     if not ray._private.gcs_utils.check_health(address):
@@ -1886,7 +1878,7 @@ def status(address: str, redis_password: str, verbose: bool):
     error = ray.experimental.internal_kv._internal_kv_get(
         ray_constants.DEBUG_AUTOSCALING_ERROR
     )
-    print(debug_status(status, error, verbose=verbose))
+    print(debug_status(status, error))
 
 
 @cli.command(hidden=True)

@@ -20,7 +20,7 @@ const StateCounter = ({
         <StatusChip status="TOTAL" type={type} suffix={`x ${list.length}`} />
       </Grid>
       {Object.entries(stateMap).map(([s, num]) => (
-        <Grid key={s} item>
+        <Grid item>
           <StatusChip status={s} type={type} suffix={` x ${num}`} />
         </Grid>
       ))}

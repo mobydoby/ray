@@ -3,7 +3,7 @@
 Tasks
 =====
 
-Ray enables arbitrary functions to be executed asynchronously on separate Python workers. Such functions are called **Ray remote functions** and their asynchronous invocations are called **Ray tasks**. Here is an example.
+Ray enables arbitrary functions to be executed asynchronously on separate Python workers. These asynchronous Ray functions are called "remote functions". Here is an example.
 
 .. tabbed:: Python
 
@@ -22,7 +22,7 @@ Ray enables arbitrary functions to be executed asynchronously on separate Python
         }
       }
 
-      // Invoke the above method as a Ray task.
+      // Invoke the above method as a Ray remote function.
       // This will immediately return an object ref (a future) and then create
       // a task that will be executed on a worker process.
       ObjectRef<Integer> res = Ray.task(MyRayApp::myFunction).remote();
@@ -37,7 +37,7 @@ Ray enables arbitrary functions to be executed asynchronously on separate Python
         }
       }
 
-      // Ray tasks are executed in parallel.
+      // Invocations of Ray remote functions happen in parallel.
       // All computation is performed in the background, driven by Ray's internal event loop.
       for(int i = 0; i < 4; i++) {
         // This doesn't block.
@@ -55,7 +55,7 @@ Ray enables arbitrary functions to be executed asynchronously on separate Python
       // Register as a remote function by `RAY_REMOTE`.
       RAY_REMOTE(MyFunction);
 
-      // Invoke the above method as a Ray task.
+      // Invoke the above method as a Ray remote function.
       // This will immediately return an object ref (a future) and then create
       // a task that will be executed on a worker process.
       auto res = ray::Task(MyFunction).Remote();
@@ -69,7 +69,7 @@ Ray enables arbitrary functions to be executed asynchronously on separate Python
       }
       RAY_REMOTE(SlowFunction);
 
-      // Ray tasks are executed in parallel.
+      // Invocations of Ray remote functions happen in parallel.
       // All computation is performed in the background, driven by Ray's internal event loop.
       for(int i = 0; i < 4; i++) {
         // This doesn't block.
@@ -78,14 +78,25 @@ Ray enables arbitrary functions to be executed asynchronously on separate Python
 
 .. _ray-object-refs:
 
-Passing object refs to Ray tasks 
+Passing object refs to remote functions
 ---------------------------------------
 
-In addition to values, `Object refs <objects.html>`__ can also be passed into remote functions. When the task gets executed, inside the function body **the argument will be the underlying value**. For example, take this function:
+**Object refs** can also be passed into remote functions. When the function actually gets executed, **the argument will be passed as the underlying Python value**. For example, take this function:
 
 .. tabbed:: Python
 
-    .. literalinclude:: doc_code/tasks_and_objects.py
+    .. code-block:: python
+
+        @ray.remote
+        def function_with_an_argument(value):
+            return value + 1
+
+        obj_ref1 = my_function.remote()
+        assert ray.get(obj_ref1) == 1
+
+        # You can pass an object ref as an argument to another Ray remote function.
+        obj_ref2 = function_with_an_argument.remote(obj_ref1)
+        assert ray.get(obj_ref2) == 2
 
 .. tabbed:: Java
 
@@ -100,7 +111,7 @@ In addition to values, `Object refs <objects.html>`__ can also be passed into re
         ObjectRef<Integer> objRef1 = Ray.task(MyRayApp::myFunction).remote();
         Assert.assertTrue(objRef1.get() == 1);
 
-        // You can pass an object ref as an argument to another Ray task.
+        // You can pass an object ref as an argument to another Ray remote function.
         ObjectRef<Integer> objRef2 = Ray.task(MyRayApp::functionWithAnArgument, objRef1).remote();
         Assert.assertTrue(objRef2.get() == 2);
 
@@ -116,13 +127,14 @@ In addition to values, `Object refs <objects.html>`__ can also be passed into re
         auto obj_ref1 = ray::Task(MyFunction).Remote();
         assert(*obj_ref1.Get() == 1);
 
-        // You can pass an object ref as an argument to another Ray task.
+        // You can pass an object ref as an argument to another Ray remote function.
         auto obj_ref2 = ray::Task(FunctionWithAnArgument).Remote(obj_ref1);
         assert(*obj_ref2.Get() == 2);
 
 Note the following behaviors:
 
-  -  As the second task depends on the output of the first task, Ray will not execute the second task until the first task has finished.
+  -  The second task will not be executed until the first task has finished
+     executing because the second task depends on the output of the first task.
   -  If the two tasks are scheduled on different machines, the output of the
      first task (the value corresponding to ``obj_ref1/objRef1``) will be sent over the
      network to the machine where the second task is scheduled.
@@ -130,15 +142,14 @@ Note the following behaviors:
 Waiting for Partial Results
 ---------------------------
 
-Calling **ray.get** on Ray task results will block until the task finished execution. After launching a number of tasks, you may want to know which ones have
-finished executing without blocking on all of them. This could be achieved by (:ref:`ray-wait-ref`). The function
+After launching a number of tasks, you may want to know which ones have
+finished executing without blocking on all of them, as in ``ray.get``. This can be done with ``wait`` (:ref:`ray-wait-ref`). The function
 works as follows.
 
 .. tabbed:: Python
 
   .. code-block:: python
 
-    # Return as soon as one of the tasks finished execution.
     ready_refs, remaining_refs = ray.wait(object_refs, num_returns=1, timeout=None)
 
 .. tabbed:: Java
@@ -158,16 +169,19 @@ works as follows.
 Multiple returns
 ----------------
 
-By default, a Ray task only returns a single Object Ref. However, you can configure Ray tasks to return multiple Object Refs, by setting the ``num_returns`` option.
-
 .. tabbed:: Python
 
-    .. literalinclude:: doc_code/tasks_multiple_returns.py
+    Python remote functions can return multiple object refs.
 
+    .. code-block:: python
 
-For tasks that return multiple objects, Ray also supports remote generators that allow a task to return one object at a time to reduce memory usage at the worker. Ray also supports an option to set the number of return values dynamically, which can be useful when the task caller does not know how many return values to expect. See the :ref:`user guide <generators>` for more details on use cases.
+      @ray.remote(num_returns=3)
+      def return_multiple():
+          return 0, 1, 2
 
-.. tabbed:: Python
+      a, b, c = return_multiple.remote()
+
+    For tasks that return multiple objects, Ray also supports remote generators that allow a task to return one object at a time to reduce memory usage at the worker. See the :ref:`user guide <generators>` for more details on use cases.
 
     .. code-block:: python
 
@@ -181,12 +195,21 @@ For tasks that return multiple objects, Ray also supports remote generators that
       a, b, c = return_multiple_as_generator.remote()
 
 
+.. tabbed:: Java
+
+    Java remote functions doesn't support returning multiple objects.
+
+.. tabbed:: C++
+
+    C++ remote functions doesn't support returning multiple objects.
+
+
 Cancelling tasks
 ----------------
 
-Ray tasks can be canceled by calling ``ray.cancel`` (:ref:`docstring <ray-cancel-ref>`) on the returned Object ref.
-
 .. tabbed:: Python
+
+    Remote functions can be canceled by calling ``ray.cancel`` (:ref:`docstring <ray-cancel-ref>`) on the returned Object ref.
 
     .. code-block:: python
 
@@ -204,6 +227,13 @@ Ray tasks can be canceled by calling ``ray.cancel`` (:ref:`docstring <ray-cancel
       except TaskCancelledError:
           print("Object reference was cancelled.")
 
+.. tabbed:: Java
+
+    Task cancellation hasn't been implemented in Java yet.
+
+.. tabbed:: C++
+
+    Task cancellation hasn't been implemented in C++ yet.
 
 More about Ray Tasks
 --------------------
@@ -214,7 +244,6 @@ More about Ray Tasks
     tasks/resources.rst
     tasks/using-ray-with-gpus.rst
     tasks/nested-tasks.rst
-    tasks/generators.rst
     tasks/fault-tolerance.rst
     tasks/scheduling.rst
     tasks/patterns/index.rst

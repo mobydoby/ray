@@ -60,7 +60,10 @@ class JsonWriter(OutputWriter):
         else:
             path = os.path.abspath(os.path.expanduser(path))
             # Try to create local dirs if they don't exist
-            os.makedirs(path, exist_ok=True)
+            try:
+                os.makedirs(path)
+            except OSError:
+                pass  # already exists
             assert os.path.exists(path), "Failed to create {}".format(path)
             self.path_is_uri = False
         self.path = path
