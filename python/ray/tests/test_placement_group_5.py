@@ -5,7 +5,6 @@ import pytest
 import ray
 from ray.tests.test_placement_group import are_pairwise_unique
 from ray.util.client.ray_client_helpers import connect_to_client_or_not
-from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
 
 
 @pytest.mark.parametrize("connect_to_client", [False, True])
@@ -24,17 +23,11 @@ def test_placement_group_bin_packing_priority(
     def index_to_actor(pg, index):
         if index < 2:
             return Actor.options(
-                scheduling_strategy=PlacementGroupSchedulingStrategy(
-                    placement_group=pg, placement_group_bundle_index=index
-                ),
-                num_cpus=1,
+                placement_group=pg, placement_group_bundle_index=index, num_cpus=1
             ).remote()
         else:
             return Actor.options(
-                scheduling_strategy=PlacementGroupSchedulingStrategy(
-                    placement_group=pg, placement_group_bundle_index=index
-                ),
-                num_gpus=1,
+                placement_group=pg, placement_group_bundle_index=index, num_gpus=1
             ).remote()
 
     def add_nodes_to_cluster(cluster):

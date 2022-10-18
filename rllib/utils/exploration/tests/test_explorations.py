@@ -85,7 +85,7 @@ class TestExplorations(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        ray.init()
+        ray.init(num_cpus=4)
 
     @classmethod
     def tearDownClass(cls):

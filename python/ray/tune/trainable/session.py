@@ -11,7 +11,7 @@ from ray.air._internal.session import Session
 from ray.air.checkpoint import Checkpoint
 from ray.tune.error import TuneError
 from ray.tune.trainable.function_trainable import _StatusReporter
-from ray.util.annotations import PublicAPI, Deprecated
+from ray.util.annotations import DeveloperAPI, PublicAPI
 from ray.util.debug import log_once
 from ray.util.placement_group import _valid_resource_shape
 from ray.util.scheduling_strategies import (
@@ -62,7 +62,7 @@ class _TuneSessionImpl(Session):
         return self._status_reporter.trial_resources
 
 
-@Deprecated(message=_deprecation_msg)
+@PublicAPI
 def is_session_enabled() -> bool:
     """Returns True if running within an Tune process."""
     global _session
@@ -204,7 +204,7 @@ def _shutdown():
     _session = None
 
 
-@Deprecated(message=_deprecation_msg)
+@PublicAPI
 def report(_metric=None, **kwargs):
     """Logs all keyword arguments.
 
@@ -240,7 +240,7 @@ def report(_metric=None, **kwargs):
         return _session(_metric, **kwargs)
 
 
-@Deprecated(message=_deprecation_msg)
+@PublicAPI
 @contextmanager
 def checkpoint_dir(step: int):
     """Returns a checkpoint dir inside a context.
@@ -316,7 +316,7 @@ def checkpoint_dir(step: int):
         _session.set_checkpoint(_checkpoint_dir)
 
 
-@Deprecated(message=_deprecation_msg)
+@DeveloperAPI
 def get_trial_dir():
     """Returns the directory where trial results are saved.
 
@@ -331,7 +331,7 @@ def get_trial_dir():
         return _session.logdir
 
 
-@Deprecated(message=_deprecation_msg)
+@DeveloperAPI
 def get_trial_name():
     """Trial name for the corresponding trial.
 
@@ -346,7 +346,7 @@ def get_trial_name():
         return _session.trial_name
 
 
-@Deprecated(message=_deprecation_msg)
+@DeveloperAPI
 def get_trial_id():
     """Trial id for the corresponding trial.
 
@@ -361,7 +361,7 @@ def get_trial_id():
         return _session.trial_id
 
 
-@Deprecated(message=_deprecation_msg)
+@DeveloperAPI
 def get_trial_resources():
     """Trial resources for the corresponding trial.
 

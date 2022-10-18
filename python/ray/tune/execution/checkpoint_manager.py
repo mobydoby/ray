@@ -2,7 +2,8 @@
 import logging
 from typing import Callable, Optional
 
-from ray.air.config import CheckpointConfig
+from ray.tune.result import TRAINING_ITERATION
+from ray.air.config import CheckpointConfig, MIN, MAX
 from ray.air._internal.checkpoint_manager import (
     _CheckpointManager as CommonCheckpointManager,
     _TrackedCheckpoint,
@@ -30,23 +31,35 @@ class _CheckpointManager(CommonCheckpointManager):
 
     def __init__(
         self,
-        checkpoint_config: Optional[CheckpointConfig] = None,
+        keep_checkpoints_num: int,
+        checkpoint_score_attr: Optional[str],
         delete_fn: Optional[Callable[["_TrackedCheckpoint"], None]] = None,
     ):
-        checkpoint_config = checkpoint_config or CheckpointConfig()
-
-        if checkpoint_config.num_to_keep == 0:
+        if keep_checkpoints_num == 0:
             raise RuntimeError(
                 "If checkpointing is enabled, Ray Tune requires `keep_checkpoints_num` "
                 "to be None or a number greater than 0"
             )
 
-        super().__init__(checkpoint_strategy=checkpoint_config, delete_fn=delete_fn)
+        checkpoint_score_attr = checkpoint_score_attr or TRAINING_ITERATION
+
+        checkpoint_score_desc = checkpoint_score_attr.startswith("min-")
+        if checkpoint_score_desc:
+            checkpoint_score_attr = checkpoint_score_attr[4:]
+        else:
+            checkpoint_score_attr = checkpoint_score_attr
+
+        checkpoint_strategy = CheckpointConfig(
+            num_to_keep=keep_checkpoints_num,
+            checkpoint_score_attribute=checkpoint_score_attr,
+            checkpoint_score_order=MIN if checkpoint_score_desc else MAX,
+        )
+
+        super().__init__(checkpoint_strategy=checkpoint_strategy, delete_fn=delete_fn)
 
     def handle_checkpoint(self, checkpoint: _TrackedCheckpoint):
         # Set checkpoint ID
-        if checkpoint.id is None:
-            checkpoint.id = self._latest_checkpoint_id
+        checkpoint.id = checkpoint.id or self._latest_checkpoint_id
         self._latest_checkpoint_id += 1
 
         if checkpoint.storage_mode == CheckpointStorage.MEMORY:
@@ -60,7 +73,7 @@ class _CheckpointManager(CommonCheckpointManager):
             self._process_persistent_checkpoint(checkpoint)
 
     def on_checkpoint(self, checkpoint: _TrackedCheckpoint):
-        """Ray Tune's entry point to handle a checkpoint."""
+        """Ray Tune's entrypoint"""
         # Todo (krfricke): Replace with handle_checkpoint.
         self.handle_checkpoint(checkpoint)
 
@@ -86,13 +99,11 @@ class _CheckpointManager(CommonCheckpointManager):
 
     @property
     def newest_checkpoint(self):
-        """Returns the newest checkpoint.
-
-        Prefers the persistent checkpoint over the memory checkpoint when
-        checkpoint id's are equal.
-        """
-        checkpoints = [self.newest_persistent_checkpoint, self.newest_memory_checkpoint]
-        newest_checkpoint = max(checkpoints, key=lambda c: c.id)
+        """Returns the newest checkpoint (based on training iteration)."""
+        newest_checkpoint = max(
+            [self.newest_persistent_checkpoint, self.newest_memory_checkpoint],
+            key=lambda c: c.id,
+        )
         return newest_checkpoint
 
     @property

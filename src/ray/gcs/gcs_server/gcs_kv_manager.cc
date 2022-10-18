@@ -188,7 +188,7 @@ void RedisInternalKV::Keys(const std::string &ns,
 }
 
 void GcsInternalKVManager::HandleInternalKVGet(
-    rpc::InternalKVGetRequest request,
+    const rpc::InternalKVGetRequest &request,
     rpc::InternalKVGetReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   auto status = ValidateKey(request.key());
@@ -209,7 +209,7 @@ void GcsInternalKVManager::HandleInternalKVGet(
 }
 
 void GcsInternalKVManager::HandleInternalKVPut(
-    rpc::InternalKVPutRequest request,
+    const rpc::InternalKVPutRequest &request,
     rpc::InternalKVPutReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   auto status = ValidateKey(request.key());
@@ -229,7 +229,7 @@ void GcsInternalKVManager::HandleInternalKVPut(
 }
 
 void GcsInternalKVManager::HandleInternalKVDel(
-    rpc::InternalKVDelRequest request,
+    const rpc::InternalKVDelRequest &request,
     rpc::InternalKVDelReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   auto status = ValidateKey(request.key());
@@ -248,7 +248,7 @@ void GcsInternalKVManager::HandleInternalKVDel(
 }
 
 void GcsInternalKVManager::HandleInternalKVExists(
-    rpc::InternalKVExistsRequest request,
+    const rpc::InternalKVExistsRequest &request,
     rpc::InternalKVExistsReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   auto status = ValidateKey(request.key());
@@ -265,7 +265,7 @@ void GcsInternalKVManager::HandleInternalKVExists(
 }
 
 void GcsInternalKVManager::HandleInternalKVKeys(
-    rpc::InternalKVKeysRequest request,
+    const rpc::InternalKVKeysRequest &request,
     rpc::InternalKVKeysReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   auto status = ValidateKey(request.prefix());

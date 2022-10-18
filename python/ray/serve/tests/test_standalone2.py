@@ -12,8 +12,6 @@ import requests
 import ray
 import ray.actor
 import ray._private.state
-from ray.experimental.state.api import list_actors
-
 from ray import serve
 from ray._private.test_utils import run_string_as_driver, wait_for_condition
 from ray.cluster_utils import AutoscalingCluster
@@ -99,7 +97,7 @@ def test_memory_omitted_option(ray_shutdown):
 def test_serve_namespace(shutdown_ray, detached, ray_namespace):
     """Test that Serve starts in SERVE_NAMESPACE regardless of driver namespace."""
 
-    with ray.init(namespace=ray_namespace) as ray_context:
+    with ray.init(namespace=ray_namespace):
 
         @serve.deployment
         def f(*args):
@@ -107,18 +105,10 @@ def test_serve_namespace(shutdown_ray, detached, ray_namespace):
 
         serve.run(f.bind())
 
-        actors = list_actors(
-            address=ray_context.address_info["address"],
-            filters=[("state", "=", "ALIVE")],
-        )
+        actors = ray.util.list_named_actors(all_namespaces=True)
 
         assert len(actors) == 3
-
-        # All actors should be in the SERVE_NAMESPACE, so none of these calls
-        # should throw an error.
-        for actor in actors:
-            ray.get_actor(name=actor["name"], namespace=SERVE_NAMESPACE)
-
+        assert all(actor["namespace"] == SERVE_NAMESPACE for actor in actors)
         assert requests.get("http://localhost:8000/f").text == "got f"
 
         serve.shutdown()
@@ -128,7 +118,7 @@ def test_serve_namespace(shutdown_ray, detached, ray_namespace):
 def test_update_num_replicas(shutdown_ray, detached):
     """Test updating num_replicas."""
 
-    with ray.init() as ray_context:
+    with ray.init():
 
         @serve.deployment(num_replicas=2)
         def f(*args):
@@ -136,25 +126,16 @@ def test_update_num_replicas(shutdown_ray, detached):
 
         serve.run(f.bind())
 
-        actors = list_actors(
-            address=ray_context.address_info["address"],
-            filters=[("state", "=", "ALIVE")],
-        )
+        actors = ray.util.list_named_actors(all_namespaces=True)
 
         serve.run(f.options(num_replicas=4).bind())
-        updated_actors = list_actors(
-            address=ray_context.address_info["address"],
-            filters=[("state", "=", "ALIVE")],
-        )
+        updated_actors = ray.util.list_named_actors(all_namespaces=True)
 
         # Check that only 2 new replicas were created
         assert len(updated_actors) == len(actors) + 2
 
         serve.run(f.options(num_replicas=1).bind())
-        updated_actors = list_actors(
-            address=ray_context.address_info["address"],
-            filters=[("state", "=", "ALIVE")],
-        )
+        updated_actors = ray.util.list_named_actors(all_namespaces=True)
 
         # Check that all but 1 replica has spun down
         assert len(updated_actors) == len(actors) - 1
@@ -404,7 +385,7 @@ class TestDeployApp:
             == "9 pizzas please!"
         )
 
-        actors = list_actors(filters=[("state", "=", "ALIVE")])
+        actors = ray.util.list_named_actors(all_namespaces=True)
 
         config = self.get_test_config()
         config["deployments"] = [
@@ -443,7 +424,7 @@ class TestDeployApp:
             timeout=15,
         )
 
-        updated_actors = list_actors(filters=[("state", "=", "ALIVE")])
+        updated_actors = ray.util.list_named_actors(all_namespaces=True)
         assert len(updated_actors) == len(actors) + 3
 
     def test_deploy_app_update_timestamp(self, client: ServeControllerClient):
@@ -664,7 +645,7 @@ class TestDeployApp:
 def test_controller_recover_and_delete(shutdown_ray):
     """Ensure that in-progress deletion can finish even after controller dies."""
 
-    ray_context = ray.init()
+    ray.init()
     client = serve.start()
 
     @serve.deployment(
@@ -676,9 +657,7 @@ def test_controller_recover_and_delete(shutdown_ray):
 
     f.deploy()
 
-    actors = list_actors(
-        address=ray_context.address_info["address"], filters=[("state", "=", "ALIVE")]
-    )
+    actors = ray.util.list_named_actors(all_namespaces=True)
 
     # Try to delete the deployments and kill the controller right after
     client.delete_deployments(["f"], blocking=False)
@@ -686,23 +665,11 @@ def test_controller_recover_and_delete(shutdown_ray):
 
     # All replicas should be removed already or after the controller revives
     wait_for_condition(
-        lambda: len(
-            list_actors(
-                address=ray_context.address_info["address"],
-                filters=[("state", "=", "ALIVE")],
-            )
-        )
-        < len(actors)
+        lambda: len(ray.util.list_named_actors(all_namespaces=True)) < len(actors)
     )
 
     wait_for_condition(
-        lambda: len(
-            list_actors(
-                address=ray_context.address_info["address"],
-                filters=[("state", "=", "ALIVE")],
-            )
-        )
-        == len(actors) - 50
+        lambda: len(ray.util.list_named_actors(all_namespaces=True)) == len(actors) - 50
     )
 
     # The deployment should be deleted, meaning its state should not be stored

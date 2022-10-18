@@ -6,7 +6,6 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from ray.air import CheckpointConfig
 from ray.air._internal.checkpoint_manager import (
     _TrackedCheckpoint,
     logger,
@@ -23,10 +22,8 @@ class CheckpointManagerTest(unittest.TestCase):
 
     def checkpoint_manager(self, keep_checkpoints_num):
         return _CheckpointManager(
-            checkpoint_config=CheckpointConfig(
-                num_to_keep=keep_checkpoints_num,
-                checkpoint_score_attribute="evaluation/episode_reward_mean",
-            ),
+            keep_checkpoints_num=keep_checkpoints_num,
+            checkpoint_score_attr="evaluation/episode_reward_mean",
             delete_fn=lambda c: None,
         )
 
@@ -240,10 +237,8 @@ class CheckpointManagerTest(unittest.TestCase):
 
     def testSameCheckpoint(self):
         checkpoint_manager = _CheckpointManager(
-            checkpoint_config=CheckpointConfig(
-                num_to_keep=1,
-                checkpoint_score_attribute="evaluation/episode_reward_mean",
-            ),
+            keep_checkpoints_num=1,
+            checkpoint_score_attr="evaluation/episode_reward_mean",
             delete_fn=lambda c: os.remove(c.dir_or_data),
         )
 

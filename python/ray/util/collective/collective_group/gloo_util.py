@@ -1,7 +1,6 @@
 """Code to wrap some GLOO API calls."""
 import asyncio
 import time
-from typing import List
 
 import numpy
 
@@ -286,18 +285,7 @@ class RayInternalKvStore:
         ret = internal_kv._internal_kv_get(key)
         return ret
 
-    def delete(self, key: str) -> int:
-        key = self.__concat_key_with_prefixes(key)
-        ret = internal_kv._internal_kv_del(key)
-        return ret
-
-    def del_keys(self, keys: List[str]) -> List[int]:
-        results = []
-        for key in keys:
-            results.append(self.delete(key))
-        return results
-
-    def wait(self, keys: List[str]):
+    def wait(self, keys: list):
         while True:
             all_exist = True
             for key in keys:

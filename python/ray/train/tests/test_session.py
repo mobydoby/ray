@@ -1,10 +1,8 @@
 import time
-import warnings
 
 import pytest
 
 import ray
-from ray.air._internal.util import StartTraceback
 from ray.train._internal.accelerator import Accelerator
 from ray.train.constants import SESSION_MISUSE_LOG_ONCE_KEY
 from ray.train._internal.session import (
@@ -109,8 +107,9 @@ def test_report_fail():
     init_session(training_func=train_func, world_rank=0, local_rank=0, world_size=1)
     session = get_session()
     session.start()
-    with pytest.raises(StartTraceback):
-        session.get_next()
+    assert session.get_next() is None
+    with pytest.raises(TypeError):
+        session.finish()
     shutdown_session()
 
 
@@ -256,9 +255,7 @@ def reset_log_once_with_str(str_to_append=None):
 def test_warn(fn):
     """Checks if calling train functions outside of session raises warning."""
 
-    with warnings.catch_warnings(record=True) as record:
-        # Ignore Deprecation warnings.
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
+    with pytest.warns(UserWarning) as record:
         fn()
 
     assert fn.__name__ in record[0].message.args[0]
@@ -269,9 +266,7 @@ def test_warn(fn):
 def test_warn_once():
     """Checks if session misuse warning is only shown once per function."""
 
-    with warnings.catch_warnings(record=True) as record:
-        # Ignore Deprecation warnings.
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
+    with pytest.warns(UserWarning) as record:
         assert not load_checkpoint()
         assert not load_checkpoint()
         assert not save_checkpoint(x=2)
@@ -313,18 +308,6 @@ def test_set_accelerator_raises_error_outside_session():
     accelerator = FakeAccelerator()
     with pytest.raises(SessionMisuseError):
         set_accelerator(accelerator)
-
-
-def test_application_error_raised():
-    def f():
-        raise ValueError
-
-    init_session(training_func=f, world_rank=0, local_rank=0, world_size=1)
-    session = get_session()
-    session.start()
-    with pytest.raises(StartTraceback):
-        session.get_next()
-    shutdown_session()
 
 
 if __name__ == "__main__":

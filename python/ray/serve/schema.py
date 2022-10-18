@@ -1,6 +1,5 @@
-import json
 from pydantic import BaseModel, Field, Extra, root_validator, validator
-from typing import Union, List, Dict, Set, Optional
+from typing import Union, List, Dict
 from ray._private.runtime_env.packaging import parse_uri
 from ray.serve._private.common import (
     DeploymentStatusInfo,
@@ -8,7 +7,7 @@ from ray.serve._private.common import (
     ApplicationStatus,
     StatusOverview,
 )
-from ray.serve._private.utils import DEFAULT, dict_keys_snake_to_camel_case
+from ray.serve._private.utils import DEFAULT
 from ray.util.annotations import DeveloperAPI, PublicAPI
 
 
@@ -55,8 +54,7 @@ class RayActorOptionsSchema(BaseModel, extra=Extra.forbid):
         ge=0,
     )
     resources: Dict = Field(
-        default={},
-        description=("The custom resources required by each replica."),
+        default={}, description=("The custom resources required by each replica.")
     )
     accelerator_type: str = Field(
         default=None,
@@ -90,15 +88,15 @@ class DeploymentSchema(
     name: str = Field(
         ..., description=("Globally-unique name identifying this deployment.")
     )
-    num_replicas: Optional[int] = Field(
-        default=DEFAULT.VALUE,
+    num_replicas: int = Field(
+        default=None,
         description=(
             "The number of processes that handle requests to this "
             "deployment. Uses a default if null."
         ),
         gt=0,
     )
-    route_prefix: Union[str, None] = Field(
+    route_prefix: Union[str, None, DEFAULT] = Field(
         default=DEFAULT.VALUE,
         description=(
             "Requests to paths under this HTTP path "
@@ -114,23 +112,23 @@ class DeploymentSchema(
         ),
     )
     max_concurrent_queries: int = Field(
-        default=DEFAULT.VALUE,
+        default=None,
         description=(
             "The max number of pending queries in a single replica. "
             "Uses a default if null."
         ),
         gt=0,
     )
-    user_config: Optional[Dict] = Field(
-        default=DEFAULT.VALUE,
+    user_config: Dict = Field(
+        default=None,
         description=(
             "Config to pass into this deployment's "
             "reconfigure method. This can be updated dynamically "
             "without restarting replicas"
         ),
     )
-    autoscaling_config: Optional[Dict] = Field(
-        default=DEFAULT.VALUE,
+    autoscaling_config: Dict = Field(
+        default=None,
         description=(
             "Config specifying autoscaling "
             "parameters for the deployment's number of replicas. "
@@ -140,7 +138,7 @@ class DeploymentSchema(
         ),
     )
     graceful_shutdown_wait_loop_s: float = Field(
-        default=DEFAULT.VALUE,
+        default=None,
         description=(
             "Duration that deployment replicas will wait until there "
             "is no more work to be done before shutting down. Uses a "
@@ -149,7 +147,7 @@ class DeploymentSchema(
         ge=0,
     )
     graceful_shutdown_timeout_s: float = Field(
-        default=DEFAULT.VALUE,
+        default=None,
         description=(
             "Serve controller waits for this duration before "
             "forcefully killing the replica for shutdown. Uses a "
@@ -158,7 +156,7 @@ class DeploymentSchema(
         ge=0,
     )
     health_check_period_s: float = Field(
-        default=DEFAULT.VALUE,
+        default=None,
         description=(
             "Frequency at which the controller will health check "
             "replicas. Uses a default if null."
@@ -166,7 +164,7 @@ class DeploymentSchema(
         gt=0,
     )
     health_check_timeout_s: float = Field(
-        default=DEFAULT.VALUE,
+        default=None,
         description=(
             "Timeout that the controller will wait for a response "
             "from the replica's health check before marking it "
@@ -175,20 +173,15 @@ class DeploymentSchema(
         gt=0,
     )
     ray_actor_options: RayActorOptionsSchema = Field(
-        default=DEFAULT.VALUE, description="Options set for each replica actor."
-    )
-
-    is_driver_deployment: bool = Field(
-        default=DEFAULT.VALUE,
-        description="Indicate Whether the deployment is driver deployment "
-        "Driver deployments are spawned one per node.",
+        default=None, description="Options set for each replica actor."
     )
 
     @root_validator
     def num_replicas_and_autoscaling_config_mutually_exclusive(cls, values):
-        if values.get("num_replicas", None) not in [DEFAULT.VALUE, None] and values.get(
-            "autoscaling_config", None
-        ) not in [DEFAULT.VALUE, None]:
+        if (
+            values.get("num_replicas", None) is not None
+            and values.get("autoscaling_config", None) is not None
+        ):
             raise ValueError(
                 "Manually setting num_replicas is not allowed "
                 "when autoscaling_config is provided."
@@ -228,16 +221,6 @@ class DeploymentSchema(
             )
 
         return v
-
-    def get_user_configured_option_names(self) -> Set[str]:
-        """Get set of names for all user-configured options.
-
-        Any field not set to DEFAULT.VALUE is considered a user-configured option.
-        """
-
-        return {
-            field for field, value in self.dict().items() if value is not DEFAULT.VALUE
-        }
 
 
 @PublicAPI(stability="beta")
@@ -347,53 +330,6 @@ class ServeApplicationSchema(BaseModel, extra=Extra.forbid):
             "runtime_env": {},
             "deployments": [],
         }
-
-    def kubernetes_dict(self, **kwargs) -> Dict:
-        """Returns dictionary in Kubernetes format.
-
-        Dictionary can be yaml-dumped to a Serve config file directly and then
-        copy-pasted into a RayService Kubernetes config.
-
-        Args: all kwargs are passed directly into schema's dict() function.
-        """
-
-        config = self.dict(**kwargs)
-        for idx, deployment in enumerate(config["deployments"]):
-
-            if isinstance(deployment.get("ray_actor_options"), dict):
-
-                # JSON-serialize ray_actor_options' resources dictionary
-                if isinstance(deployment["ray_actor_options"].get("resources"), dict):
-                    deployment["ray_actor_options"]["resources"] = json.dumps(
-                        deployment["ray_actor_options"]["resources"]
-                    )
-
-                # JSON-serialize ray_actor_options' runtime_env dictionary
-                if isinstance(deployment["ray_actor_options"].get("runtime_env"), dict):
-                    deployment["ray_actor_options"]["runtime_env"] = json.dumps(
-                        deployment["ray_actor_options"]["runtime_env"]
-                    )
-
-                # Convert ray_actor_options' keys
-                deployment["ray_actor_options"] = dict_keys_snake_to_camel_case(
-                    deployment["ray_actor_options"]
-                )
-
-            # JSON-serialize user_config dictionary
-            if isinstance(deployment.get("user_config"), dict):
-                deployment["user_config"] = json.dumps(deployment["user_config"])
-
-            # Convert deployment's keys
-            config["deployments"][idx] = dict_keys_snake_to_camel_case(deployment)
-
-        # Convert top-level runtime_env
-        if isinstance(config.get("runtime_env"), dict):
-            config["runtime_env"] = json.dumps(config["runtime_env"])
-
-        # Convert top-level option's keys
-        config = dict_keys_snake_to_camel_case(config)
-
-        return config
 
 
 @PublicAPI(stability="beta")

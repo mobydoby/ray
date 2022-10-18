@@ -14,7 +14,6 @@ import tempfile
 import time
 import timeit
 import traceback
-from collections import defaultdict
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from typing import Any, Dict, List, Optional
 
@@ -24,7 +23,6 @@ import psutil  # We must import psutil after ray because we bundle it with ray.
 from ray._private import (
     ray_constants,
 )
-from ray._private.worker import RayContext
 import yaml
 from grpc._channel import _InactiveRpcError
 
@@ -821,36 +819,6 @@ def fetch_prometheus(prom_addresses):
     return components_dict, metric_names, metric_samples
 
 
-def fetch_prometheus_metrics(prom_addresses: List[str]) -> Dict[str, List[Any]]:
-    """Return prometheus metrics from the given addresses.
-
-    Args:
-        prom_addresses: List of metrics_agent addresses to collect metrics from.
-
-    Returns:
-        Dict mapping from metric name to list of samples for the metric.
-    """
-    _, _, samples = fetch_prometheus(prom_addresses)
-    samples_by_name = defaultdict(list)
-    for sample in samples:
-        samples_by_name[sample.name].append(sample)
-    return samples_by_name
-
-
-def raw_metrics(info: RayContext) -> Dict[str, List[Any]]:
-    """Return prometheus metrics from a RayContext
-
-    Args:
-        info: Ray context returned from ray.init()
-
-    Returns:
-        Dict from metric name to a list of samples for the metrics
-    """
-    metrics_page = "localhost:{}".format(info.address_info["metrics_export_port"])
-    print("Fetch metrics from", metrics_page)
-    return fetch_prometheus_metrics([metrics_page])
-
-
 def load_test_config(config_file_name):
     """Loads a config yaml from tests/test_cli_patterns."""
     here = os.path.realpath(__file__)
@@ -1268,7 +1236,7 @@ def test_get_directory_size_bytes():
         assert ray._private.utils.get_directory_size_bytes(tmp_dir) == 152
 
 
-def check_local_files_gced(cluster, whitelist=None):
+def check_local_files_gced(cluster):
     for node in cluster.list_all_nodes():
         for subdir in ["conda", "pip", "working_dir_files", "py_modules_files"]:
             all_files = os.listdir(
@@ -1276,13 +1244,16 @@ def check_local_files_gced(cluster, whitelist=None):
             )
             # Check that there are no files remaining except for .lock files
             # and generated requirements.txt files.
-            # Note: On Windows the top folder is not deleted as it is in use.
             # TODO(architkulkarni): these files should get cleaned up too!
-            items = list(filter(lambda f: not f.endswith((".lock", ".txt")), all_files))
-            if whitelist and set(items).issubset(whitelist):
-                continue
-            if len(items) > 0:
+            if (
+                len(
+                    list(filter(lambda f: not f.endswith((".lock", ".txt")), all_files))
+                )
+                > 0
+            ):
+                print(str(all_files))
                 return False
+
     return True
 
 
@@ -1438,17 +1409,6 @@ def get_node_stats(raylet, num_retry=5, timeout=2):
     return reply
 
 
-# Send a RPC to the raylet to have it self-destruct its process.
-def kill_raylet(raylet, graceful=False):
-    raylet_address = f'{raylet["NodeManagerAddress"]}:{raylet["NodeManagerPort"]}'
-    channel = grpc.insecure_channel(raylet_address)
-    stub = node_manager_pb2_grpc.NodeManagerServiceStub(channel)
-    try:
-        stub.ShutdownRaylet(node_manager_pb2.ShutdownRayletRequest(graceful=graceful))
-    except _InactiveRpcError:
-        assert not graceful
-
-
 # Creates a state api client assuming the head node (gcs) is local.
 def get_local_state_client():
     hostname = ray.worker._global_node.gcs_address
@@ -1552,18 +1512,3 @@ def external_ray_cluster_activity_hook5():
             "timestamp": datetime.now().timestamp(),
         }
     }
-
-
-def get_gcs_memory_used():
-    import psutil
-
-    m = {
-        process.name(): process.memory_info().rss
-        for process in psutil.process_iter()
-        if (
-            process.status() not in (psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD)
-            and process.name() in ("gcs_server", "redis-server")
-        )
-    }
-    assert "gcs_server" in m
-    return sum(m.values())

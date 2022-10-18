@@ -141,23 +141,23 @@ class GcsInternalKVManager : public rpc::InternalKVHandler {
   explicit GcsInternalKVManager(std::unique_ptr<InternalKVInterface> kv_instance)
       : kv_instance_(std::move(kv_instance)) {}
 
-  void HandleInternalKVGet(rpc::InternalKVGetRequest request,
+  void HandleInternalKVGet(const rpc::InternalKVGetRequest &request,
                            rpc::InternalKVGetReply *reply,
                            rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleInternalKVPut(rpc::InternalKVPutRequest request,
+  void HandleInternalKVPut(const rpc::InternalKVPutRequest &request,
                            rpc::InternalKVPutReply *reply,
                            rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleInternalKVDel(rpc::InternalKVDelRequest request,
+  void HandleInternalKVDel(const rpc::InternalKVDelRequest &request,
                            rpc::InternalKVDelReply *reply,
                            rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleInternalKVExists(rpc::InternalKVExistsRequest request,
+  void HandleInternalKVExists(const rpc::InternalKVExistsRequest &request,
                               rpc::InternalKVExistsReply *reply,
                               rpc::SendReplyCallback send_reply_callback) override;
 
-  void HandleInternalKVKeys(rpc::InternalKVKeysRequest request,
+  void HandleInternalKVKeys(const rpc::InternalKVKeysRequest &request,
                             rpc::InternalKVKeysReply *reply,
                             rpc::SendReplyCallback send_reply_callback) override;
 

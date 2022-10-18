@@ -46,8 +46,7 @@ class TaskSubmitter {
 
   virtual void RemovePlacementGroup(const std::string &group_id) = 0;
 
-  virtual bool WaitPlacementGroupReady(const std::string &group_id,
-                                       int64_t timeout_seconds) {
+  virtual bool WaitPlacementGroupReady(const std::string &group_id, int timeout_seconds) {
     return true;
   }
 };

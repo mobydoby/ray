@@ -82,26 +82,26 @@ class JobInfoGcsServiceHandler {
  public:
   virtual ~JobInfoGcsServiceHandler() = default;
 
-  virtual void HandleAddJob(AddJobRequest request,
+  virtual void HandleAddJob(const AddJobRequest &request,
                             AddJobReply *reply,
                             SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleMarkJobFinished(MarkJobFinishedRequest request,
+  virtual void HandleMarkJobFinished(const MarkJobFinishedRequest &request,
                                      MarkJobFinishedReply *reply,
                                      SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetAllJobInfo(GetAllJobInfoRequest request,
+  virtual void HandleGetAllJobInfo(const GetAllJobInfoRequest &request,
                                    GetAllJobInfoReply *reply,
                                    SendReplyCallback send_reply_callback) = 0;
 
   virtual void AddJobFinishedListener(
       std::function<void(std::shared_ptr<JobID>)> listener) = 0;
 
-  virtual void HandleReportJobError(ReportJobErrorRequest request,
+  virtual void HandleReportJobError(const ReportJobErrorRequest &request,
                                     ReportJobErrorReply *reply,
                                     SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetNextJobID(GetNextJobIDRequest request,
+  virtual void HandleGetNextJobID(const GetNextJobIDRequest &request,
                                   GetNextJobIDReply *reply,
                                   SendReplyCallback send_reply_callback) = 0;
 };
@@ -140,31 +140,31 @@ class ActorInfoGcsServiceHandler {
  public:
   virtual ~ActorInfoGcsServiceHandler() = default;
 
-  virtual void HandleRegisterActor(RegisterActorRequest request,
+  virtual void HandleRegisterActor(const RegisterActorRequest &request,
                                    RegisterActorReply *reply,
                                    SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleCreateActor(CreateActorRequest request,
+  virtual void HandleCreateActor(const CreateActorRequest &request,
                                  CreateActorReply *reply,
                                  SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetActorInfo(GetActorInfoRequest request,
+  virtual void HandleGetActorInfo(const GetActorInfoRequest &request,
                                   GetActorInfoReply *reply,
                                   SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetNamedActorInfo(GetNamedActorInfoRequest request,
+  virtual void HandleGetNamedActorInfo(const GetNamedActorInfoRequest &request,
                                        GetNamedActorInfoReply *reply,
                                        SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleListNamedActors(rpc::ListNamedActorsRequest request,
+  virtual void HandleListNamedActors(const rpc::ListNamedActorsRequest &request,
                                      rpc::ListNamedActorsReply *reply,
                                      rpc::SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetAllActorInfo(GetAllActorInfoRequest request,
+  virtual void HandleGetAllActorInfo(const GetAllActorInfoRequest &request,
                                      GetAllActorInfoReply *reply,
                                      SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleKillActorViaGcs(KillActorViaGcsRequest request,
+  virtual void HandleKillActorViaGcs(const KillActorViaGcsRequest &request,
                                      KillActorViaGcsReply *reply,
                                      SendReplyCallback send_reply_callback) = 0;
 };
@@ -214,19 +214,19 @@ class NodeInfoGcsServiceHandler {
  public:
   virtual ~NodeInfoGcsServiceHandler() = default;
 
-  virtual void HandleRegisterNode(RegisterNodeRequest request,
+  virtual void HandleRegisterNode(const RegisterNodeRequest &request,
                                   RegisterNodeReply *reply,
                                   SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleDrainNode(DrainNodeRequest request,
+  virtual void HandleDrainNode(const DrainNodeRequest &request,
                                DrainNodeReply *reply,
                                SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetAllNodeInfo(GetAllNodeInfoRequest request,
+  virtual void HandleGetAllNodeInfo(const GetAllNodeInfoRequest &request,
                                     GetAllNodeInfoReply *reply,
                                     SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetInternalConfig(GetInternalConfigRequest request,
+  virtual void HandleGetInternalConfig(const GetInternalConfigRequest &request,
                                        GetInternalConfigReply *reply,
                                        SendReplyCallback send_reply_callback) = 0;
 };
@@ -264,26 +264,22 @@ class NodeResourceInfoGcsServiceHandler {
  public:
   virtual ~NodeResourceInfoGcsServiceHandler() = default;
 
-  virtual void HandleGetResources(GetResourcesRequest request,
+  virtual void HandleGetResources(const GetResourcesRequest &request,
                                   GetResourcesReply *reply,
                                   SendReplyCallback send_reply_callback) = 0;
 
   virtual void HandleGetAllAvailableResources(
-      rpc::GetAllAvailableResourcesRequest request,
+      const rpc::GetAllAvailableResourcesRequest &request,
       rpc::GetAllAvailableResourcesReply *reply,
       rpc::SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleReportResourceUsage(ReportResourceUsageRequest request,
+  virtual void HandleReportResourceUsage(const ReportResourceUsageRequest &request,
                                          ReportResourceUsageReply *reply,
                                          SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetAllResourceUsage(GetAllResourceUsageRequest request,
+  virtual void HandleGetAllResourceUsage(const GetAllResourceUsageRequest &request,
                                          GetAllResourceUsageReply *reply,
                                          SendReplyCallback send_reply_callback) = 0;
-
-  virtual void HandleGetGcsSchedulingStats(GetGcsSchedulingStatsRequest request,
-                                           GetGcsSchedulingStatsReply *reply,
-                                           SendReplyCallback send_reply_callback) = 0;
 };
 
 /// The `GrpcService` for `NodeResourceInfoGcsService`.
@@ -306,7 +302,6 @@ class NodeResourceInfoGrpcService : public GrpcService {
     NODE_RESOURCE_INFO_SERVICE_RPC_HANDLER(GetAllAvailableResources);
     NODE_RESOURCE_INFO_SERVICE_RPC_HANDLER(ReportResourceUsage);
     NODE_RESOURCE_INFO_SERVICE_RPC_HANDLER(GetAllResourceUsage);
-    NODE_RESOURCE_INFO_SERVICE_RPC_HANDLER(GetGcsSchedulingStats);
   }
 
  private:
@@ -319,10 +314,10 @@ class NodeResourceInfoGrpcService : public GrpcService {
 class HeartbeatInfoGcsServiceHandler {
  public:
   virtual ~HeartbeatInfoGcsServiceHandler() = default;
-  virtual void HandleReportHeartbeat(ReportHeartbeatRequest request,
+  virtual void HandleReportHeartbeat(const ReportHeartbeatRequest &request,
                                      ReportHeartbeatReply *reply,
                                      SendReplyCallback send_reply_callback) = 0;
-  virtual void HandleCheckAlive(CheckAliveRequest request,
+  virtual void HandleCheckAlive(const CheckAliveRequest &request,
                                 CheckAliveReply *reply,
                                 SendReplyCallback send_reply_callback) = 0;
 };
@@ -356,11 +351,11 @@ class StatsGcsServiceHandler {
  public:
   virtual ~StatsGcsServiceHandler() = default;
 
-  virtual void HandleAddProfileData(AddProfileDataRequest request,
+  virtual void HandleAddProfileData(const AddProfileDataRequest &request,
                                     AddProfileDataReply *reply,
                                     SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetAllProfileInfo(GetAllProfileInfoRequest request,
+  virtual void HandleGetAllProfileInfo(const GetAllProfileInfoRequest &request,
                                        GetAllProfileInfoReply *reply,
                                        SendReplyCallback send_reply_callback) = 0;
 };
@@ -396,19 +391,19 @@ class WorkerInfoGcsServiceHandler {
  public:
   virtual ~WorkerInfoGcsServiceHandler() = default;
 
-  virtual void HandleReportWorkerFailure(ReportWorkerFailureRequest request,
+  virtual void HandleReportWorkerFailure(const ReportWorkerFailureRequest &request,
                                          ReportWorkerFailureReply *reply,
                                          SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetWorkerInfo(GetWorkerInfoRequest request,
+  virtual void HandleGetWorkerInfo(const GetWorkerInfoRequest &request,
                                    GetWorkerInfoReply *reply,
                                    SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetAllWorkerInfo(GetAllWorkerInfoRequest request,
+  virtual void HandleGetAllWorkerInfo(const GetAllWorkerInfoRequest &request,
                                       GetAllWorkerInfoReply *reply,
                                       SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleAddWorkerInfo(AddWorkerInfoRequest request,
+  virtual void HandleAddWorkerInfo(const AddWorkerInfoRequest &request,
                                    AddWorkerInfoReply *reply,
                                    SendReplyCallback send_reply_callback) = 0;
 };
@@ -446,28 +441,28 @@ class PlacementGroupInfoGcsServiceHandler {
  public:
   virtual ~PlacementGroupInfoGcsServiceHandler() = default;
 
-  virtual void HandleCreatePlacementGroup(CreatePlacementGroupRequest request,
+  virtual void HandleCreatePlacementGroup(const CreatePlacementGroupRequest &request,
                                           CreatePlacementGroupReply *reply,
                                           SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleRemovePlacementGroup(RemovePlacementGroupRequest request,
+  virtual void HandleRemovePlacementGroup(const RemovePlacementGroupRequest &request,
                                           RemovePlacementGroupReply *reply,
                                           SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetPlacementGroup(GetPlacementGroupRequest request,
+  virtual void HandleGetPlacementGroup(const GetPlacementGroupRequest &request,
                                        GetPlacementGroupReply *reply,
                                        SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetAllPlacementGroup(GetAllPlacementGroupRequest request,
+  virtual void HandleGetAllPlacementGroup(const GetAllPlacementGroupRequest &request,
                                           GetAllPlacementGroupReply *reply,
                                           SendReplyCallback send_reply_callback) = 0;
 
   virtual void HandleWaitPlacementGroupUntilReady(
-      WaitPlacementGroupUntilReadyRequest request,
+      const WaitPlacementGroupUntilReadyRequest &request,
       WaitPlacementGroupUntilReadyReply *reply,
       SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGetNamedPlacementGroup(GetNamedPlacementGroupRequest request,
+  virtual void HandleGetNamedPlacementGroup(const GetNamedPlacementGroupRequest &request,
                                             GetNamedPlacementGroupReply *reply,
                                             SendReplyCallback send_reply_callback) = 0;
 };
@@ -506,23 +501,23 @@ class PlacementGroupInfoGrpcService : public GrpcService {
 class InternalKVGcsServiceHandler {
  public:
   virtual ~InternalKVGcsServiceHandler() = default;
-  virtual void HandleInternalKVKeys(InternalKVKeysRequest request,
+  virtual void HandleInternalKVKeys(const InternalKVKeysRequest &request,
                                     InternalKVKeysReply *reply,
                                     SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleInternalKVGet(InternalKVGetRequest request,
+  virtual void HandleInternalKVGet(const InternalKVGetRequest &request,
                                    InternalKVGetReply *reply,
                                    SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleInternalKVPut(InternalKVPutRequest request,
+  virtual void HandleInternalKVPut(const InternalKVPutRequest &request,
                                    InternalKVPutReply *reply,
                                    SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleInternalKVDel(InternalKVDelRequest request,
+  virtual void HandleInternalKVDel(const InternalKVDelRequest &request,
                                    InternalKVDelReply *reply,
                                    SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleInternalKVExists(InternalKVExistsRequest request,
+  virtual void HandleInternalKVExists(const InternalKVExistsRequest &request,
                                       InternalKVExistsReply *reply,
                                       SendReplyCallback send_reply_callback) = 0;
 };
@@ -553,7 +548,7 @@ class InternalKVGrpcService : public GrpcService {
 class RuntimeEnvGcsServiceHandler {
  public:
   virtual ~RuntimeEnvGcsServiceHandler() = default;
-  virtual void HandlePinRuntimeEnvURI(PinRuntimeEnvURIRequest request,
+  virtual void HandlePinRuntimeEnvURI(const PinRuntimeEnvURIRequest &request,
                                       PinRuntimeEnvURIReply *reply,
                                       SendReplyCallback send_reply_callback) = 0;
 };
@@ -581,17 +576,18 @@ class InternalPubSubGcsServiceHandler {
  public:
   virtual ~InternalPubSubGcsServiceHandler() = default;
 
-  virtual void HandleGcsPublish(GcsPublishRequest request,
+  virtual void HandleGcsPublish(const GcsPublishRequest &request,
                                 GcsPublishReply *reply,
                                 SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGcsSubscriberPoll(GcsSubscriberPollRequest request,
+  virtual void HandleGcsSubscriberPoll(const GcsSubscriberPollRequest &request,
                                        GcsSubscriberPollReply *reply,
                                        SendReplyCallback send_reply_callback) = 0;
 
-  virtual void HandleGcsSubscriberCommandBatch(GcsSubscriberCommandBatchRequest request,
-                                               GcsSubscriberCommandBatchReply *reply,
-                                               SendReplyCallback send_reply_callback) = 0;
+  virtual void HandleGcsSubscriberCommandBatch(
+      const GcsSubscriberCommandBatchRequest &request,
+      GcsSubscriberCommandBatchReply *reply,
+      SendReplyCallback send_reply_callback) = 0;
 };
 
 class InternalPubSubGrpcService : public GrpcService {

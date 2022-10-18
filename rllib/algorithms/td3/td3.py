@@ -23,7 +23,6 @@ class TD3Config(DDPGConfig):
 
     Example:
         >>> from ray.rllib.algorithms.ddpg.td3 import TD3Config
-        >>> from ray import air
         >>> from ray import tune
         >>> config = TD3Config()
         >>> # Print out some default values.
@@ -35,11 +34,11 @@ class TD3Config(DDPGConfig):
         >>> config.environment(env="Pendulum-v1")
         >>> # Use to_dict() to get the old-style python config dict
         >>> # when running with tune.
-        >>> tune.Tuner(
+        >>> tune.run(
         ...     "TD3",
-        ...     run_config=air.RunConfig(stop={"episode_reward_mean": 200}),
-        ...     param_space=config.to_dict(),
-        ... ).fit()
+        ...     stop={"episode_reward_mean": 200},
+        ...     config=config.to_dict(),
+        ... )
     """
 
     def __init__(self, algo_class=None):
@@ -117,7 +116,7 @@ class _deprecated_default_config(dict):
     @Deprecated(
         old="ray.rllib.algorithms.ddpg.td3::TD3_DEFAULT_CONFIG",
         new="ray.rllib.algorithms.td3.td3::TD3Config(...)",
-        error=True,
+        error=False,
     )
     def __getitem__(self, item):
         return super().__getitem__(item)

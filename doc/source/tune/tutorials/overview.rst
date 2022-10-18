@@ -23,33 +23,9 @@ Tune Feature Guides
     ---
     :img-top: /images/tune.png
 
-    .. link-button:: tune-run
+    .. link-button:: tune-lifecycle
         :type: ref
-        :text: Running Basic Experiments
-        :classes: btn-link btn-block stretched-link
-
-    ---
-    :img-top: /images/tune.png
-
-    .. link-button:: tune-output
-        :type: ref
-        :text: Logging Tune Runs
-        :classes: btn-link btn-block stretched-link
-
-    ---
-    :img-top: /images/tune.png
-
-    .. link-button:: tune-resources
-        :type: ref
-        :text: Setting Trial Resources
-        :classes: btn-link btn-block stretched-link
-
-    ---
-    :img-top: /images/tune.png
-
-    .. link-button:: tune-search-space-tutorial
-        :type: ref
-        :text: Using Search Spaces
+        :text: How does Tune work?
         :classes: btn-link btn-block stretched-link
 
     ---
@@ -57,15 +33,7 @@ Tune Feature Guides
 
     .. link-button:: tune-stopping
         :type: ref
-        :text: How to Stop and Resume
-        :classes: btn-link btn-block stretched-link
-
-    ---
-    :img-top: /images/tune.png
-
-    .. link-button:: tune-checkpoints
-        :type: ref
-        :text: Working with Checkpoints
+        :text: A Guide To Stopping and Resuming Tune Experiments
         :classes: btn-link btn-block stretched-link
 
     ---
@@ -73,15 +41,7 @@ Tune Feature Guides
 
     .. link-button:: tune-metrics
         :type: ref
-        :text: Using Callbacks and Metrics
-        :classes: btn-link btn-block stretched-link
-
-    ---
-    :img-top: /images/tune.png
-
-    .. link-button:: tune-advanced-tutorial
-        :type: ref
-        :text: Using Population-Based Training
+        :text: Using Callbacks and Metrics in Tune
         :classes: btn-link btn-block stretched-link
 
     ---
@@ -89,15 +49,47 @@ Tune Feature Guides
 
     .. link-button:: tune-distributed
         :type: ref
-        :text: Deploying Tune in the Cloud
+        :text: A Guide To Distributed Hyperparameter Tuning
         :classes: btn-link btn-block stretched-link
 
     ---
     :img-top: /images/tune.png
 
-    .. link-button:: tune-lifecycle
+    .. link-button:: tune-output
         :type: ref
-        :text: Tune Architecture
+        :text: How To Log Tune Runs
+        :classes: btn-link btn-block stretched-link
+
+    ---
+    :img-top: /images/tune.png
+
+    .. link-button:: tune-resources
+        :type: ref
+        :text: Using Resources (GPUs, Parallel & Distributed Runs)
+        :classes: btn-link btn-block stretched-link
+
+    ---
+    :img-top: /images/tune.png
+
+    .. link-button:: tune-checkpoints
+        :type: ref
+        :text: Using Checkpoints For Your Experiments
+        :classes: btn-link btn-block stretched-link
+
+    ---
+    :img-top: /images/tune.png
+
+    .. link-button:: tune-search-space-tutorial
+        :type: ref
+        :text: A Guide To Working with Advanced Search Spaces
+        :classes: btn-link btn-block stretched-link
+
+    ---
+    :img-top: /images/tune.png
+
+    .. link-button:: tune-advanced-tutorial
+        :type: ref
+        :text: A simple guide to Population-based Training
         :classes: btn-link btn-block stretched-link
 
     ---
@@ -105,6 +97,6 @@ Tune Feature Guides
 
     .. link-button:: tune-scalability
         :type: ref
-        :text: Scalability Benchmarks
+        :text: Tune Scalability and Overhead Benchmarks
         :classes: btn-link btn-block stretched-link
 

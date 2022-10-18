@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 import ray
 from ray.data._internal.fast_repartition import fast_repartition
@@ -88,12 +88,7 @@ class RandomizeBlocksStage(AllToAllStage):
 class RandomShuffleStage(AllToAllStage):
     """Implementation of `Dataset.random_shuffle()`."""
 
-    def __init__(
-        self,
-        seed: Optional[int],
-        output_num_blocks: Optional[int],
-        remote_args: Optional[Dict[str, Any]] = None,
-    ):
+    def __init__(self, seed: Optional[int], output_num_blocks: Optional[int]):
         def do_shuffle(block_list, clear_input_blocks: bool, block_udf, remote_args):
             num_blocks = block_list.executed_num_blocks()  # Blocking.
             if num_blocks == 0:
@@ -124,11 +119,7 @@ class RandomShuffleStage(AllToAllStage):
             )
 
         super().__init__(
-            "random_shuffle",
-            output_num_blocks,
-            do_shuffle,
-            supports_block_udf=True,
-            remote_args=remote_args,
+            "random_shuffle", output_num_blocks, do_shuffle, supports_block_udf=True
         )
 
 

@@ -58,7 +58,6 @@ class ARSConfig(AlgorithmConfig):
 
     Example:
         >>> from ray.rllib.algorithms.ars import ARSConfig
-        >>> from ray import air
         >>> from ray import tune
         >>> config = ARSConfig()
         >>> # Print out some default values.
@@ -69,11 +68,11 @@ class ARSConfig(AlgorithmConfig):
         >>> config.environment(env="CartPole-v1")
         >>> # Use to_dict() to get the old-style python config dict
         >>> # when running with tune.
-        >>> tune.Tuner(
+        >>> tune.run(
         ...     "ARS",
-        ...     run_config=air.RunConfig(stop={"episode_reward_mean": 200}),
-        ...     param_space=config.to_dict(),
-        ... ).fit()
+        ...     stop={"episode_reward_mean": 200},
+        ...     config=config.to_dict(),
+        ... )
     """
 
     def __init__(self):
@@ -574,7 +573,7 @@ class _deprecated_default_config(dict):
     @Deprecated(
         old="ray.rllib.algorithms.ars.ars.DEFAULT_CONFIG",
         new="ray.rllib.algorithms.ars.ars.ARSConfig(...)",
-        error=True,
+        error=False,
     )
     def __getitem__(self, item):
         return super().__getitem__(item)

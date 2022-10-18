@@ -1,7 +1,7 @@
 import inspect
 import json
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Set
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pydantic
 from google.protobuf.json_format import MessageToDict
@@ -23,7 +23,6 @@ from ray.serve._private.constants import (
     DEFAULT_HTTP_HOST,
     DEFAULT_HTTP_PORT,
 )
-from ray.serve._private.utils import DEFAULT
 from ray.serve.generated.serve_pb2 import (
     DeploymentConfig as DeploymentConfigProto,
     DeploymentLanguage,
@@ -123,8 +122,6 @@ class DeploymentConfig(BaseModel):
         health_check_timeout_s (Optional[float]):
             Timeout that the controller will wait for a response from the
             replica's health check before marking it unhealthy.
-        user_configured_option_names (Set[str]):
-            The names of options manually configured by the user.
     """
 
     num_replicas: NonNegativeInt = 1
@@ -152,9 +149,6 @@ class DeploymentConfig(BaseModel):
     deployment_language: Any = DeploymentLanguage.PYTHON
 
     version: Optional[str] = None
-
-    # Contains the names of deployment options manually set by the user
-    user_configured_option_names: Set[str] = set()
 
     class Config:
         validate_assignment = True
@@ -188,16 +182,13 @@ class DeploymentConfig(BaseModel):
 
     def to_proto(self):
         data = self.dict()
-        if data.get("user_config") is not None:
+        if data.get("user_config"):
             if self.needs_pickle():
                 data["user_config"] = cloudpickle.dumps(data["user_config"])
         if data.get("autoscaling_config"):
             data["autoscaling_config"] = AutoscalingConfigProto(
                 **data["autoscaling_config"]
             )
-        data["user_configured_option_names"] = list(
-            data["user_configured_option_names"]
-        )
         return DeploymentConfigProto(**data)
 
     def to_proto_bytes(self):
@@ -234,10 +225,6 @@ class DeploymentConfig(BaseModel):
         if "version" in data:
             if data["version"] == "":
                 data["version"] = None
-        if "user_configured_option_names" in data:
-            data["user_configured_option_names"] = set(
-                data["user_configured_option_names"]
-            )
         return cls(**data)
 
     @classmethod
@@ -246,10 +233,16 @@ class DeploymentConfig(BaseModel):
         return cls.from_proto(proto)
 
     @classmethod
-    def from_default(cls, **kwargs):
+    def from_default(cls, ignore_none: bool = False, **kwargs):
         """Creates a default DeploymentConfig and overrides it with kwargs.
 
-        Ignores any kwargs set to DEFAULT.VALUE.
+        Only accepts the same keywords as the class. Passing in any other
+        keyword raises a ValueError.
+
+        Args:
+            ignore_none: When True, any valid keywords with value None
+                are ignored, and their values stay default. Invalid keywords
+                still raise a TypeError.
 
         Raises:
             TypeError: when a keyword that's not an argument to the class is
@@ -269,7 +262,8 @@ class DeploymentConfig(BaseModel):
                     f"{list(valid_config_options)}."
                 )
 
-        kwargs = {key: val for key, val in kwargs.items() if val != DEFAULT.VALUE}
+        if ignore_none:
+            kwargs = {key: val for key, val in kwargs.items() if val is not None}
 
         for key, val in kwargs.items():
             config.__setattr__(key, val)
@@ -396,8 +390,7 @@ class ReplicaConfig:
                 f'Got invalid type "{type(self.ray_actor_options)}" for '
                 "ray_actor_options. Expected a dictionary."
             )
-        # Please keep this in sync with the docstring for the ray_actor_options
-        # kwarg in api.py.
+
         allowed_ray_actor_options = {
             # Resource options
             "accelerator_type",
@@ -477,8 +470,8 @@ class ReplicaConfig:
         return ReplicaConfig(
             proto.deployment_def_name,
             proto.deployment_def,
-            proto.init_args if proto.init_args != b"" else None,
-            proto.init_kwargs if proto.init_kwargs != b"" else None,
+            proto.init_args,
+            proto.init_kwargs,
             json.loads(proto.ray_actor_options),
             needs_pickle,
         )

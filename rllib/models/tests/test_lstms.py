@@ -2,7 +2,6 @@ from gym.spaces import Box, Dict, Discrete, MultiDiscrete, Tuple
 import unittest
 
 import ray
-from ray import air
 from ray import tune
 from ray.rllib.examples.env.random_env import RandomEnv
 from ray.rllib.utils.test_utils import framework_iterator
@@ -53,11 +52,7 @@ class TestLSTMs(unittest.TestCase):
             "num_workers": 1,
         }
         for _ in framework_iterator(config):
-            tune.Tuner(
-                "PPO",
-                param_space=config,
-                run_config=air.RunConfig(stop={"training_iteration": 1}, verbose=1),
-            ).fit()
+            tune.run("PPO", config=config, stop={"training_iteration": 1}, verbose=1)
 
 
 if __name__ == "__main__":

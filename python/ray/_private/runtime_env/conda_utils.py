@@ -23,20 +23,18 @@ def get_conda_activate_commands(conda_env_name: str) -> List[str]:
     if not _WIN32 and ("CONDA_EXE" in os.environ or RAY_CONDA_HOME in os.environ):
         conda_path = get_conda_bin_executable("conda")
         activate_conda_env = [
-            ".",
-            f"{os.path.dirname(conda_path)}/../etc/profile.d/conda.sh",
-            "&&",
+            ". {}/../etc/profile.d/conda.sh".format(os.path.dirname(conda_path))
         ]
-        activate_conda_env += ["conda", "activate", conda_env_name]
+        activate_conda_env += ["conda activate {} 1>&2".format(conda_env_name)]
 
     else:
         activate_path = get_conda_bin_executable("activate")
         if not _WIN32:
             # Use bash command syntax
-            activate_conda_env = ["source", activate_path, conda_env_name]
+            return ["source %s %s 1>&2" % (activate_path, conda_env_name)]
         else:
-            activate_conda_env = ["conda", "activate", conda_env_name]
-    return activate_conda_env + ["1>&2", "&&"]
+            return ["conda activate %s" % (conda_env_name)]
+    return activate_conda_env
 
 
 def get_conda_bin_executable(executable_name: str) -> str:

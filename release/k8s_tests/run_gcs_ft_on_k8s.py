@@ -319,7 +319,7 @@ def get_stats():
     failures = float(data[-1][18]) - float(data[offset][18])
 
     # Available, through put
-    return (total - failures) / total, total / (end_time - start_time), data
+    return (total - failures) / total, total / (end_time - start_time)
 
 
 def main():
@@ -333,17 +333,11 @@ def main():
         duration = 5 * 60 * 60
         procs.append(start_sending_traffics(duration * 1.1, users))
         start_killing_nodes(duration, 60, 6)
-        rate, qps, data = get_stats()
+        rate, qps = get_stats()
 
         print("Result:", rate, qps)
-
-        try:
-            assert rate > 0.999
-            assert qps > users * 10 * 0.8
-        except Exception:
-            print("Raw Data", data)
-            print("Result:", rate, qps)
-            raise
+        assert rate > 0.9995
+        assert qps > users * 10 * 0.8
 
     except Exception as e:
         print("Experiment failed")

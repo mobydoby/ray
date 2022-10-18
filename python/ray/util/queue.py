@@ -50,8 +50,6 @@ class Queue:
     """
 
     def __init__(self, maxsize: int = 0, actor_options: Optional[Dict] = None) -> None:
-        ray._private.usage.usage_lib.record_library_usage("util.Queue")
-
         actor_options = actor_options or {}
         self.maxsize = maxsize
         self.actor = (

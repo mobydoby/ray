@@ -360,17 +360,6 @@ class SklearnTrainer(BaseTrainer):
             parallelize_cv = True
         return parallelize_cv
 
-    def _save_checkpoint(self) -> None:
-        with tune.checkpoint_dir(step=1) as checkpoint_dir:
-            with open(os.path.join(checkpoint_dir, MODEL_KEY), "wb") as f:
-                cpickle.dump(self.estimator, f)
-
-            if self.preprocessor:
-                save_preprocessor_to_dir(self.preprocessor, checkpoint_dir)
-
-    def _report(self, results: dict) -> None:
-        tune.report(**results)
-
     def training_loop(self) -> None:
         register_ray()
 
@@ -408,7 +397,12 @@ class SklearnTrainer(BaseTrainer):
             self.estimator.fit(X_train, y_train, **self.fit_params)
             fit_time = time() - start_time
 
-            self._save_checkpoint()
+            with tune.checkpoint_dir(step=1) as checkpoint_dir:
+                with open(os.path.join(checkpoint_dir, MODEL_KEY), "wb") as f:
+                    cpickle.dump(self.estimator, f)
+
+                if self.preprocessor:
+                    save_preprocessor_to_dir(self.preprocessor, checkpoint_dir)
 
             if self.label_column:
                 validation_set_scores = self._score_on_validation_sets(
@@ -434,4 +428,4 @@ class SklearnTrainer(BaseTrainer):
             **cv_scores,
             "fit_time": fit_time,
         }
-        self._report(results)
+        tune.report(**results)

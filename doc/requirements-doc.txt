@@ -29,8 +29,7 @@ tabulate
 uvicorn==0.16.0
 werkzeug
 wandb
-tensorflow; sys_platform != 'darwin' or platform_machine != 'arm64'
-tensorflow-macos; sys_platform == 'darwin' and platform_machine == 'arm64'
+tensorflow
 transformers
 
 # Ray libraries

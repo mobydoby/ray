@@ -1,4 +1,4 @@
-from typing import List, Optional, Type, Union
+from typing import Type
 
 from ray.rllib.algorithms.algorithm import Algorithm
 from ray.rllib.algorithms.algorithm_config import AlgorithmConfig
@@ -21,7 +21,6 @@ class PGConfig(AlgorithmConfig):
 
     Example:
         >>> from ray.rllib.algorithms.pg import PGConfig
-        >>> from ray import air
         >>> from ray import tune
         >>> config = PGConfig()
         >>> # Print out some default values.
@@ -33,11 +32,11 @@ class PGConfig(AlgorithmConfig):
         >>> config.environment(env="CartPole-v1")
         >>> # Use to_dict() to get the old-style python config dict
         >>> # when running with tune.
-        >>> tune.Tuner(
+        >>> tune.run(
         ...     "PG",
-        ...     run_config=air.RunConfig(stop={"episode_reward_mean": 200}),
-        ...     param_space=config.to_dict(),
-        ... ).fit()
+        ...     stop={"episode_reward_mean": 200},
+        ...     config=config.to_dict(),
+        ... )
     """
 
     def __init__(self):
@@ -48,42 +47,10 @@ class PGConfig(AlgorithmConfig):
         # __sphinx_doc_begin__
         # Override some of AlgorithmConfig's default values with PG-specific values.
         self.num_workers = 0
-        self.lr_schedule = None
         self.lr = 0.0004
         self._disable_preprocessor_api = True
         # __sphinx_doc_end__
         # fmt: on
-
-    @override(AlgorithmConfig)
-    def training(
-        self,
-        *,
-        lr_schedule: Optional[List[List[Union[int, float]]]] = None,
-        **kwargs,
-    ) -> "PGConfig":
-        """Sets the training related configuration.
-
-        Args:
-            gamma: Float specifying the discount factor of the Markov Decision process.
-            lr: The default learning rate.
-            train_batch_size: Training batch size, if applicable.
-            model: Arguments passed into the policy model. See models/catalog.py for a
-                full list of the available model options.
-            optimizer: Arguments to pass to the policy optimizer.
-            lr_schedule: Learning rate schedule. In the format of
-                [[timestep, lr-value], [timestep, lr-value], ...]
-                Intermediary timesteps will be assigned to interpolated learning rate
-                values. A schedule should normally start from timestep 0.
-
-        Returns:
-            This updated AlgorithmConfig object.
-        """
-        # Pass kwargs onto super's `training()` method.
-        super().training(**kwargs)
-        if lr_schedule is not None:
-            self.lr_schedule = lr_schedule
-
-        return self
 
 
 class PG(Algorithm):
@@ -130,7 +97,7 @@ class _deprecated_default_config(dict):
     @Deprecated(
         old="ray.rllib.algorithms.pg.default_config::DEFAULT_CONFIG",
         new="ray.rllib.algorithms.pg.pg::PGConfig(...)",
-        error=True,
+        error=False,
     )
     def __getitem__(self, item):
         return super().__getitem__(item)

@@ -25,9 +25,6 @@ DEFAULT_HTTP_HOST = "127.0.0.1"
 #: HTTP Port
 DEFAULT_HTTP_PORT = 8000
 
-#: gRPC Port
-DEFAULT_GRPC_PORT = 9000
-
 #: Max concurrency
 ASYNC_CONCURRENCY = int(1e6)
 
@@ -121,7 +118,3 @@ class ServeHandleType(str, Enum):
 MIGRATION_MESSAGE = (
     "See https://docs.ray.io/en/latest/serve/index.html for more information."
 )
-
-
-# [EXPERIMENTAL] Disable the http actor
-SERVE_EXPERIMENTAL_DISABLE_HTTP_PROXY = "SERVE_EXPERIMENTAL_DISABLE_HTTP_PROXY"

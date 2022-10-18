@@ -45,8 +45,6 @@ Extending ``CLIReporter`` lets you control reporting frequency. For example:
 
 .. code-block:: python
 
-    from ray.tune.experiment.trial import Trial
-
     class ExperimentTerminationReporter(CLIReporter):
         def should_report(self, trials, done=False):
             """Reports only on experiment termination."""
@@ -57,7 +55,6 @@ Extending ``CLIReporter`` lets you control reporting frequency. For example:
 
     class TrialTerminationReporter(CLIReporter):
         def __init__(self):
-            super(TrialTerminationReporter, self).__init__()
             self.num_terminated = 0
 
         def should_report(self, trials, done=False):

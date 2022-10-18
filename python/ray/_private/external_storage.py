@@ -213,9 +213,6 @@ class ExternalStorage(metaclass=abc.ABCMeta):
 
         Args:
             urls: URLs that store spilled object files.
-
-        NOTE: This function should not fail if some of the urls
-        do not exist.
         """
 
     @abc.abstractmethod
@@ -334,11 +331,7 @@ class FileSystemStorage(ExternalStorage):
     def delete_spilled_objects(self, urls: List[str]):
         for url in urls:
             path = parse_url_with_offset(url.decode()).base_url
-            try:
-                os.remove(path)
-            except FileNotFoundError:
-                # Occurs when the urls are retried during worker crash/failure.
-                pass
+            os.remove(path)
 
     def destroy_external_storage(self):
         for directory_path in self._directory_paths:
@@ -425,11 +418,7 @@ class ExternalStorageRayStorageImpl(ExternalStorage):
     def delete_spilled_objects(self, urls: List[str]):
         for url in urls:
             path = parse_url_with_offset(url.decode()).base_url
-            try:
-                self._fs.delete_file(path)
-            except FileNotFoundError:
-                # Occurs when the urls are retried during worker crash/failure.
-                pass
+            self._fs.delete_file(path)
 
     def destroy_external_storage(self):
         try:

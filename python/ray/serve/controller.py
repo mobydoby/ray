@@ -90,7 +90,6 @@ class ServeController:
         http_config: HTTPOptions,
         head_node_id: str,
         detached: bool = False,
-        _disable_http_proxy: bool = False,
     ):
         configure_component_logger(
             component_name="controller", component_id=str(os.getpid())
@@ -113,17 +112,13 @@ class ServeController:
 
         self.long_poll_host = LongPollHost()
 
-        if _disable_http_proxy:
-            self.http_state = None
-        else:
-            self.http_state = HTTPState(
-                controller_name,
-                detached,
-                http_config,
-                head_node_id,
-                gcs_client,
-            )
-
+        self.http_state = HTTPState(
+            controller_name,
+            detached,
+            http_config,
+            head_node_id,
+            gcs_client,
+        )
         self.endpoint_state = EndpointState(self.kv_store, self.long_poll_host)
 
         # Fetch all running actors in current cluster as source of current
@@ -220,15 +215,10 @@ class ServeController:
 
     def get_http_proxies(self) -> Dict[NodeId, ActorHandle]:
         """Returns a dictionary of node ID to http_proxy actor handles."""
-        if self.http_state is None:
-            return {}
         return self.http_state.get_http_proxy_handles()
 
     def get_http_proxy_names(self) -> bytes:
         """Returns the http_proxy actor name list serialized by protobuf."""
-        if self.http_state is None:
-            return None
-
         from ray.serve.generated.serve_pb2 import ActorNameList
 
         actor_name_list = ActorNameList(
@@ -243,11 +233,11 @@ class ServeController:
         while True:
 
             async with self.write_lock:
-                if self.http_state:
-                    try:
-                        self.http_state.update()
-                    except Exception:
-                        logger.exception("Exception updating HTTP state.")
+                try:
+                    self.http_state.update()
+                except Exception:
+                    logger.exception("Exception updating HTTP state.")
+
                 try:
                     self.deployment_state_manager.update()
                 except Exception:
@@ -314,14 +304,10 @@ class ServeController:
 
     def get_http_config(self):
         """Return the HTTP proxy configuration."""
-        if self.http_state is None:
-            return None
         return self.http_state.get_config()
 
     def get_root_url(self):
         """Return the root url for the serve instance."""
-        if self.http_state is None:
-            return None
         http_config = self.get_http_config()
         if http_config.root_url == "":
             if SERVE_ROOT_URL_ENV_KEY in os.environ:
@@ -339,8 +325,7 @@ class ServeController:
             self.kv_store.delete(CONFIG_CHECKPOINT_KEY)
             self.deployment_state_manager.shutdown()
             self.endpoint_state.shutdown()
-            if self.http_state:
-                self.http_state.shutdown()
+            self.http_state.shutdown()
 
     def deploy(
         self,
@@ -349,7 +334,6 @@ class ServeController:
         replica_config_proto_bytes: bytes,
         route_prefix: Optional[str],
         deployer_job_id: Union["ray._raylet.JobID", bytes],
-        is_driver_deployment: Optional[bool] = False,
     ) -> bool:
         if route_prefix is not None:
             assert route_prefix.startswith("/")
@@ -382,7 +366,6 @@ class ServeController:
             deployer_job_id=deployer_job_id,
             start_time_ms=int(time.time() * 1000),
             autoscaling_policy=autoscaling_policy,
-            is_driver_deployment=is_driver_deployment,
         )
         # TODO(architkulkarni): When a deployment is redeployed, even if
         # the only change was num_replicas, the start_time_ms is refreshed.

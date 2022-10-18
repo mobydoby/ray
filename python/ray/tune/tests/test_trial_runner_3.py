@@ -8,9 +8,7 @@ import tempfile
 import unittest
 
 import ray
-from ray.air import CheckpointConfig
 from ray.rllib import _register_all
-from ray.rllib.algorithms.callbacks import DefaultCallbacks
 
 from ray.tune import TuneError
 from ray.tune.execution.ray_trial_executor import RayTrialExecutor
@@ -27,20 +25,6 @@ from ray.tune.search import Searcher, ConcurrencyLimiter
 from ray.tune.search.search_generator import SearchGenerator
 from ray.tune.syncer import SyncConfig, Syncer
 from ray.tune.tests.tune_test_util import TrialResultObserver
-
-
-class MyCallbacks(DefaultCallbacks):
-    def on_episode_start(
-        self,
-        *,
-        worker,
-        base_env,
-        policies,
-        episode,
-        env_index,
-        **kwargs,
-    ):
-        print("in callback")
 
 
 class TrialRunnerTest3(unittest.TestCase):
@@ -445,7 +429,7 @@ class TrialRunnerTest3(unittest.TestCase):
                 "__fake",
                 trial_id="trial_terminate",
                 stopping_criterion={"training_iteration": 1},
-                checkpoint_config=CheckpointConfig(checkpoint_frequency=1),
+                checkpoint_freq=1,
             )
         ]
         runner.add_trial(trials[0])
@@ -459,7 +443,7 @@ class TrialRunnerTest3(unittest.TestCase):
                 "__fake",
                 trial_id="trial_fail",
                 stopping_criterion={"training_iteration": 3},
-                checkpoint_config=CheckpointConfig(checkpoint_frequency=1),
+                checkpoint_freq=1,
                 config={"mock_error": True},
             )
         ]
@@ -478,7 +462,7 @@ class TrialRunnerTest3(unittest.TestCase):
                 "__fake",
                 trial_id="trial_succ",
                 stopping_criterion={"training_iteration": 2},
-                checkpoint_config=CheckpointConfig(checkpoint_frequency=1),
+                checkpoint_freq=1,
             )
         ]
         runner.add_trial(trials[2])
@@ -526,9 +510,7 @@ class TrialRunnerTest3(unittest.TestCase):
             Trial(
                 "__fake",
                 trial_id="checkpoint",
-                checkpoint_config=CheckpointConfig(
-                    checkpoint_at_end=True,
-                ),
+                checkpoint_at_end=True,
                 stopping_criterion={"training_iteration": 2},
             )
         )
@@ -562,8 +544,12 @@ class TrialRunnerTest3(unittest.TestCase):
 
         trial = Trial(
             "__fake",
-            config={"callbacks": MyCallbacks},
-            checkpoint_config=CheckpointConfig(checkpoint_frequency=1),
+            config={
+                "callbacks": {
+                    "on_episode_start": lambda i: i,
+                }
+            },
+            checkpoint_freq=1,
         )
         runner = TrialRunner(local_checkpoint_dir=self.tmpdir, checkpoint_period=0)
         runner.add_trial(trial)
@@ -574,6 +560,7 @@ class TrialRunnerTest3(unittest.TestCase):
         runner2 = TrialRunner(resume="LOCAL", local_checkpoint_dir=self.tmpdir)
         new_trial = runner2.get_trials()[0]
         self.assertTrue("callbacks" in new_trial.config)
+        self.assertTrue("on_episode_start" in new_trial.config["callbacks"])
 
     def testCheckpointOverwrite(self):
         def count_checkpoints(cdir):
@@ -584,9 +571,7 @@ class TrialRunnerTest3(unittest.TestCase):
 
         ray.init(num_cpus=2)
 
-        trial = Trial(
-            "__fake", checkpoint_config=CheckpointConfig(checkpoint_frequency=1)
-        )
+        trial = Trial("__fake", checkpoint_freq=1)
         tmpdir = tempfile.mkdtemp()
         runner = TrialRunner(local_checkpoint_dir=tmpdir, checkpoint_period=0)
         runner.add_trial(trial)
@@ -616,9 +601,7 @@ class TrialRunnerTest3(unittest.TestCase):
 
         ray.init(num_cpus=2)
 
-        trial = Trial(
-            "__fake", checkpoint_config=CheckpointConfig(checkpoint_frequency=3)
-        )
+        trial = Trial("__fake", checkpoint_freq=3)
         runner = TrialRunner(local_checkpoint_dir=self.tmpdir, checkpoint_period=0)
         runner.add_trial(trial)
 
@@ -651,9 +634,7 @@ class TrialRunnerTest3(unittest.TestCase):
 
         trial = Trial(
             "__fake",
-            checkpoint_config=CheckpointConfig(
-                checkpoint_at_end=True,
-            ),
+            checkpoint_at_end=True,
             stopping_criterion={"training_iteration": 4},
         )
         observer = TrialResultObserver()
