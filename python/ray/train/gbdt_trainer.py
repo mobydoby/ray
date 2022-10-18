@@ -68,9 +68,9 @@ def _convert_scaling_config_to_ray_params(
 
 @DeveloperAPI
 class GBDTTrainer(BaseTrainer):
-    """Abstract class for scaling gradient-boosting decision tree (GBDT) frameworks.
+    """Common logic for gradient-boosting decision tree (GBDT) frameworks
+    like XGBoost-Ray and LightGBM-Ray.
 
-    Inherited by XGBoostTrainer and LightGBMTrainer.
 
     Args:
         datasets: Ray Datasets to use for training and validation. Must include a
@@ -206,17 +206,6 @@ class GBDTTrainer(BaseTrainer):
                     self._ray_params.num_actors
                 )
 
-    def _checkpoint_at_end(self, model, evals_result: dict) -> None:
-        # We need to call session.report to save checkpoints, so we report
-        # the last received metrics (possibly again).
-        result_dict = flatten_dict(evals_result, delimiter="-")
-        for k in list(result_dict):
-            result_dict[k] = result_dict[k][-1]
-
-        with tune.checkpoint_dir(step=self._model_iteration(model)) as cp_dir:
-            self._save_model(model, path=os.path.join(cp_dir, MODEL_KEY))
-        tune.report(**result_dict)
-
     def training_loop(self) -> None:
         config = self.train_kwargs.copy()
 
@@ -268,10 +257,18 @@ class GBDTTrainer(BaseTrainer):
             checkpoint_at_end = True
 
         if checkpoint_at_end:
-            self._checkpoint_at_end(model, evals_result)
+            # We need to call tune.report to save checkpoints, so we report
+            # the last received metrics (possibly again).
+            result_dict = flatten_dict(evals_result, delimiter="-")
+            for k in list(result_dict):
+                result_dict[k] = result_dict[k][-1]
 
-    def _generate_trainable_cls(self) -> Type["Trainable"]:
-        trainable_cls = super()._generate_trainable_cls()
+            with tune.checkpoint_dir(step=self._model_iteration(model)) as cp_dir:
+                self._save_model(model, path=os.path.join(cp_dir, MODEL_KEY))
+                tune.report(**result_dict)
+
+    def as_trainable(self) -> Type[Trainable]:
+        trainable_cls = super().as_trainable()
         trainer_cls = self.__class__
         scaling_config = self.scaling_config
         ray_params_cls = self._ray_params_cls

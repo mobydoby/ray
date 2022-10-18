@@ -8,7 +8,6 @@ import io.ray.api.PyActorHandle;
 import io.ray.api.Ray;
 import io.ray.api.exception.RayActorException;
 import io.ray.api.exception.RayTaskException;
-import io.ray.api.exception.RayTimeoutException;
 import io.ray.api.function.PyActorMethod;
 import io.ray.serve.api.Serve;
 import io.ray.serve.common.Constants;
@@ -50,8 +49,6 @@ public class LongPollClientFactory {
   private static ScheduledExecutorService scheduledExecutorService;
 
   private static boolean inited = false;
-
-  private static long longPollTimoutS = 10L;
 
   public static final Map<LongPollNamespace, Function<byte[], Object>> DESERIALIZERS =
       new HashMap<>();
@@ -100,11 +97,6 @@ public class LongPollClientFactory {
           Optional.ofNullable(replicaContext.getConfig())
               .map(config -> config.get(RayServeConfig.LONG_POOL_CLIENT_INTERVAL))
               .map(Long::valueOf)
-              .orElse(1L);
-      longPollTimoutS =
-          Optional.ofNullable(replicaContext.getConfig())
-              .map(config -> config.get(RayServeConfig.LONG_POOL_CLIENT_TIMEOUT_S))
-              .map(Long::valueOf)
               .orElse(10L);
     } catch (Exception e) {
       LOGGER.info(
@@ -124,16 +116,10 @@ public class LongPollClientFactory {
                 return thread;
               }
             });
-    long finalIntervalS = intervalS;
-    scheduledExecutorService.scheduleWithFixedDelay(
+    scheduledExecutorService.scheduleAtFixedRate(
         () -> {
           try {
             pollNext();
-          } catch (RayTimeoutException e) {
-            LOGGER.info(
-                "long poll timeout in {} seconds, execute next poll after {} seconds.",
-                longPollTimoutS,
-                finalIntervalS);
           } catch (RayActorException e) {
             LOGGER.error("LongPollClient failed to connect to host. Shutting down.");
             stop();
@@ -164,15 +150,14 @@ public class LongPollClientFactory {
                   PyActorMethod.of(Constants.CONTROLLER_LISTEN_FOR_CHANGE_METHOD),
                   longPollRequest.toProtobuf().toByteArray())
               .remote();
-      Object data = Ray.get(currentRef, longPollTimoutS * 1000);
-      longPollResult = LongPollResult.parseFrom((byte[]) data);
+      longPollResult = LongPollResult.parseFrom((byte[]) currentRef.get());
     } else {
       // Poll from java controller.
-      ObjectRef<byte[]> currentRef =
+      ObjectRef<LongPollResult> currentRef =
           ((ActorHandle<ServeController>) hostActor)
               .task(ServeController::listenForChange, longPollRequest)
               .remote();
-      longPollResult = LongPollResult.parseFrom(currentRef.get(longPollTimoutS * 1000));
+      longPollResult = currentRef.get();
     }
     processUpdate(longPollResult == null ? null : longPollResult.getUpdatedObjects());
   }
@@ -209,6 +194,12 @@ public class LongPollClientFactory {
     }
   }
 
+  public static void clearAllCache() {
+    KEY_LISTENERS.clear();
+    OBJECT_SNAPSHOTS.clear();
+    SNAPSHOT_IDS.clear();
+  }
+
   public static void unregister(Set<KeyType> keys) {
     if (CollectionUtil.isEmpty(keys)) {
       return;
@@ -227,17 +218,9 @@ public class LongPollClientFactory {
     }
     if (scheduledExecutorService != null) {
       scheduledExecutorService.shutdown();
-      try {
-        scheduledExecutorService.awaitTermination(longPollTimoutS, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        LOGGER.error("awaitTermination error, the exception is ", e);
-      }
     }
-    KEY_LISTENERS.clear();
-    OBJECT_SNAPSHOTS.clear();
-    SNAPSHOT_IDS.clear();
     inited = false;
-    LOGGER.info("LongPollClient was stopped.");
+    LOGGER.info("LongPollClient was shopped.");
   }
 
   public static boolean isInitialized() {

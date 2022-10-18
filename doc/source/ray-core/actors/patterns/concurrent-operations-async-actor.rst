@@ -12,7 +12,6 @@ Code example
 
 .. code-block:: python
 
-    @ray.remote
     class LongPollingActor:
         def __init__(self, data_store_actor):
             self.data_store_actor = data_store_actor
@@ -35,7 +34,7 @@ There are 2 issues here.
 
 .. code-block:: python
 
-    l = LongPollingActor.remote(data_store_actor)
+    l = long_polling_actor.remote()
     # Actor runs a while loop
     l.run.remote()
     # This won't be processed forever because the actor thread is occupied by the run method.
@@ -49,7 +48,6 @@ First, let's create an async actor.
 
 .. code-block:: python
 
-    @ray.remote
     class LongPollingActorAsync:
         def __init__(self, data_store_actor):
             self.data_store_actor = data_store_actor
@@ -57,10 +55,10 @@ First, let's create an async actor.
         async def run(self):
             while True:
                 # Coroutine will switch context when "await" is called.
-                data = await self.data_store_actor.fetch.remote()
+                data = await data_store_actor.fetch.remote()
                 self._process(data)
 
-        def _process(self, data):
+        def _process(self):
             pass
 
         async def other_task(self):
@@ -70,7 +68,7 @@ Now, it will work if you run the same code we used before.
 
 .. code-block:: python
 
-    l = LongPollingActorAsync.remote(data_store_actor)
+    l = LongPollingActorAsync.remote()
     l.run.remote()
     ray.get(l.other_task.remote())
 

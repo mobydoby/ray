@@ -29,37 +29,37 @@ class MockGcsPlacementGroupManager : public GcsPlacementGroupManager {
  public:
   MOCK_METHOD(void,
               HandleCreatePlacementGroup,
-              (rpc::CreatePlacementGroupRequest request,
+              (const rpc::CreatePlacementGroupRequest &request,
                rpc::CreatePlacementGroupReply *reply,
                rpc::SendReplyCallback send_reply_callback),
               (override));
   MOCK_METHOD(void,
               HandleRemovePlacementGroup,
-              (rpc::RemovePlacementGroupRequest request,
+              (const rpc::RemovePlacementGroupRequest &request,
                rpc::RemovePlacementGroupReply *reply,
                rpc::SendReplyCallback send_reply_callback),
               (override));
   MOCK_METHOD(void,
               HandleGetPlacementGroup,
-              (rpc::GetPlacementGroupRequest request,
+              (const rpc::GetPlacementGroupRequest &request,
                rpc::GetPlacementGroupReply *reply,
                rpc::SendReplyCallback send_reply_callback),
               (override));
   MOCK_METHOD(void,
               HandleGetNamedPlacementGroup,
-              (rpc::GetNamedPlacementGroupRequest request,
+              (const rpc::GetNamedPlacementGroupRequest &request,
                rpc::GetNamedPlacementGroupReply *reply,
                rpc::SendReplyCallback send_reply_callback),
               (override));
   MOCK_METHOD(void,
               HandleGetAllPlacementGroup,
-              (rpc::GetAllPlacementGroupRequest request,
+              (const rpc::GetAllPlacementGroupRequest &request,
                rpc::GetAllPlacementGroupReply *reply,
                rpc::SendReplyCallback send_reply_callback),
               (override));
   MOCK_METHOD(void,
               HandleWaitPlacementGroupUntilReady,
-              (rpc::WaitPlacementGroupUntilReadyRequest request,
+              (const rpc::WaitPlacementGroupUntilReadyRequest &request,
                rpc::WaitPlacementGroupUntilReadyReply *reply,
                rpc::SendReplyCallback send_reply_callback),
               (override));

@@ -9,7 +9,6 @@ from ray._private.gcs_utils import ErrorType
 from ray._raylet import (
     MessagePackSerializedObject,
     MessagePackSerializer,
-    ObjectRefGenerator,
     Pickle5SerializedObject,
     Pickle5Writer,
     RawSerializedObject,
@@ -21,7 +20,6 @@ from ray.exceptions import (
     ActorPlacementGroupRemoved,
     ActorUnschedulableError,
     LocalRayletDiedError,
-    NodeDiedError,
     ObjectFetchTimedOutError,
     ObjectLostError,
     ObjectReconstructionFailedError,
@@ -41,7 +39,6 @@ from ray.exceptions import (
     TaskPlacementGroupRemoved,
     TaskUnschedulableError,
     WorkerCrashedError,
-    OutOfMemoryError,
 )
 from ray.util import serialization_addons
 
@@ -124,14 +121,6 @@ class SerializationContext:
             )
 
         self._register_cloudpickle_reducer(ray.ObjectRef, object_ref_reducer)
-
-        def object_ref_generator_reducer(obj):
-            return ObjectRefGenerator, (obj._refs,)
-
-        self._register_cloudpickle_reducer(
-            ObjectRefGenerator, object_ref_generator_reducer
-        )
-
         serialization_addons.apply(self)
 
     def _register_cloudpickle_reducer(self, cls, reducer):
@@ -293,12 +282,6 @@ class SerializationContext:
                 return OutOfDiskError(
                     object_ref.hex(), object_ref.owner_address(), object_ref.call_site()
                 )
-            elif error_type == ErrorType.Value("OUT_OF_MEMORY"):
-                error_info = self._deserialize_error_info(data, metadata_fields)
-                return OutOfMemoryError(error_info.error_message)
-            elif error_type == ErrorType.Value("NODE_DIED"):
-                error_info = self._deserialize_error_info(data, metadata_fields)
-                return NodeDiedError(error_info.error_message)
             elif error_type == ErrorType.Value("OBJECT_DELETED"):
                 return ReferenceCountingAssertionError(
                     object_ref.hex(), object_ref.owner_address(), object_ref.call_site()

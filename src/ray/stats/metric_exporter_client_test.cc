@@ -125,8 +125,7 @@ class MetricExporterClientTest : public ::testing::Test {
     exporter.reset(new stats::StdoutExporterClient());
     mock1.reset(new MockExporterClient1(exporter));
     mock2.reset(new MockExporterClient2(mock1));
-    ray::stats::Init(
-        global_tags, MetricsAgentPort, WorkerID::Nil(), mock2, kMockReportBatchSize);
+    ray::stats::Init(global_tags, MetricsAgentPort, mock2, kMockReportBatchSize);
   }
 
   virtual void TearDown() override { Shutdown(); }

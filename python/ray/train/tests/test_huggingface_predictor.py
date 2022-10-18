@@ -13,19 +13,43 @@ from ray.train.predictor import TYPE_TO_ENUM
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 from transformers.pipelines import pipeline
 
-
 import ray
+from ray.data.preprocessor import Preprocessor
 from ray.train.huggingface import HuggingFaceCheckpoint, HuggingFacePredictor
 
-from dummy_preprocessor import DummyPreprocessor
+prompts = pd.DataFrame(
+    ["Complete me", "And me", "Please complete"], columns=["sentences"]
+)
 
-test_strings = ["Complete me", "And me", "Please complete"]
-prompts = pd.DataFrame(test_strings, columns=["sentences"])
-
-# We are only testing Causal Language Modeling here
+# We are only testing Casual Language Modeling here
 
 model_checkpoint = "hf-internal-testing/tiny-random-gpt2"
 tokenizer_checkpoint = "hf-internal-testing/tiny-random-gpt2"
+
+
+@pytest.fixture
+def ray_start_4_cpus():
+    address_info = ray.init(num_cpus=4)
+    yield address_info
+    # The code after the yield will run as teardown code.
+    ray.shutdown()
+
+
+@pytest.fixture
+def ray_start_runtime_env():
+    # Requires at least torch 1.11 to pass
+    # TODO update torch version in requirements instead
+    runtime_env = {"pip": ["torch==1.11.0"]}
+    address_info = ray.init(runtime_env=runtime_env)
+    yield address_info
+    # The code after the yield will run as teardown code.
+    ray.shutdown()
+
+
+class DummyPreprocessor(Preprocessor):
+    def transform_batch(self, df):
+        self._batch_transformed = True
+        return df
 
 
 def test_repr(tmpdir):
@@ -64,7 +88,7 @@ def test_predict(tmpdir, ray_start_runtime_env, batch_type):
 
         assert len(predictions) == 3
         if preprocessor:
-            assert predictor.get_preprocessor().has_preprocessed
+            assert hasattr(predictor.get_preprocessor(), "_batch_transformed")
 
     ray.get(test.remote(use_preprocessor=True))
     ray.get(test.remote(use_preprocessor=False))

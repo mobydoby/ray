@@ -1,11 +1,12 @@
 package io.ray.serve.controller;
 
 import io.ray.serve.poll.LongPollRequest;
+import io.ray.serve.poll.LongPollResult;
 
 public interface ServeController {
   byte[] getAllEndpoints();
 
-  byte[] listenForChange(LongPollRequest longPollRequest);
+  LongPollResult listenForChange(LongPollRequest longPollRequest);
 
   String getRootUrl();
 }

@@ -2,7 +2,6 @@ import os
 import unittest
 
 import ray
-from ray.air import CheckpointConfig
 from ray.rllib import _register_all
 
 from ray.tune.result import TIMESTEPS_TOTAL
@@ -112,14 +111,7 @@ class RunExperimentTest(unittest.TestCase):
                     f.write("OK")
                 return checkpoint
 
-        trials = run_experiments(
-            {
-                "foo": {
-                    "run": train,
-                    "checkpoint_config": CheckpointConfig(checkpoint_at_end=True),
-                }
-            }
-        )
+        trials = run_experiments({"foo": {"run": train, "checkpoint_at_end": True}})
         for trial in trials:
             self.assertEqual(trial.status, Trial.TERMINATED)
             self.assertTrue(trial.has_checkpoint())

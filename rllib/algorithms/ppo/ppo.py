@@ -59,7 +59,6 @@ class PPOConfig(AlgorithmConfig):
 
     Example:
         >>> from ray.rllib.algorithms.ppo import PPOConfig
-        >>> from ray import air
         >>> from ray import tune
         >>> config = PPOConfig()
         >>> # Print out some default values.
@@ -70,11 +69,11 @@ class PPOConfig(AlgorithmConfig):
         >>> config.environment(env="CartPole-v1")
         >>> # Use to_dict() to get the old-style python config dict
         >>> # when running with tune.
-        >>> tune.Tuner(
+        >>> tune.run(
         ...     "PPO",
-        ...     run_config=air.RunConfig(stop={"episode_reward_mean": 200}),
-        ...     param_space=config.to_dict(),
-        ... ).fit()
+        ...     stop={"episode_reward_mean": 200},
+        ...     config=config.to_dict(),
+        ... )
     """
 
     def __init__(self, algo_class=None):
@@ -206,7 +205,7 @@ class PPOConfig(AlgorithmConfig):
             deprecation_warning(
                 old="ppo.DEFAULT_CONFIG['vf_share_layers']",
                 new="PPOConfig().training(model={'vf_share_layers': ...})",
-                error=True,
+                error=False,
             )
 
         return self
@@ -483,7 +482,7 @@ class _deprecated_default_config(dict):
     @Deprecated(
         old="ray.rllib.agents.ppo.ppo::DEFAULT_CONFIG",
         new="ray.rllib.algorithms.ppo.ppo::PPOConfig(...)",
-        error=True,
+        error=False,
     )
     def __getitem__(self, item):
         return super().__getitem__(item)

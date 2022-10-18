@@ -182,7 +182,7 @@ public class ServeControllerClient {
    * @param name
    * @param timeoutS
    */
-  private void waitForDeploymentHealthy(String name, Long timeoutS) {
+  public void waitForDeploymentHealthy(String name, Long timeoutS) {
     long start = System.currentTimeMillis();
     boolean isTimeout = true;
     while (timeoutS == null || System.currentTimeMillis() - start < timeoutS * 1000) {
@@ -215,7 +215,7 @@ public class ServeControllerClient {
     }
   }
 
-  private void waitForDeploymentHealthy(String name) {
+  public void waitForDeploymentHealthy(String name) {
     waitForDeploymentHealthy(name, null);
   }
 

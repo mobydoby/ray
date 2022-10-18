@@ -104,8 +104,7 @@ class ObjectStoreRunner {
 class ObjectManagerInterface {
  public:
   virtual uint64_t Pull(const std::vector<rpc::ObjectReference> &object_refs,
-                        BundlePriority prio,
-                        const std::string &task_name) = 0;
+                        BundlePriority prio) = 0;
   virtual void CancelPull(uint64_t request_id) = 0;
   virtual bool PullRequestActiveOrWaitingForMetadata(uint64_t request_id) const = 0;
   virtual ~ObjectManagerInterface(){};
@@ -125,7 +124,7 @@ class ObjectManager : public ObjectManagerInterface,
   /// \param request Push request including the object chunk data
   /// \param reply Reply to the sender
   /// \param send_reply_callback Callback of the request
-  void HandlePush(rpc::PushRequest request,
+  void HandlePush(const rpc::PushRequest &request,
                   rpc::PushReply *reply,
                   rpc::SendReplyCallback send_reply_callback) override;
 
@@ -134,7 +133,7 @@ class ObjectManager : public ObjectManagerInterface,
   /// \param request Pull request
   /// \param reply Reply
   /// \param send_reply_callback Callback of request
-  void HandlePull(rpc::PullRequest request,
+  void HandlePull(const rpc::PullRequest &request,
                   rpc::PullReply *reply,
                   rpc::SendReplyCallback send_reply_callback) override;
 
@@ -143,7 +142,7 @@ class ObjectManager : public ObjectManagerInterface,
   /// \param request Free objects request
   /// \param reply Reply
   /// \param send_reply_callback
-  void HandleFreeObjects(rpc::FreeObjectsRequest request,
+  void HandleFreeObjects(const rpc::FreeObjectsRequest &request,
                          rpc::FreeObjectsReply *reply,
                          rpc::SendReplyCallback send_reply_callback) override;
 
@@ -205,8 +204,7 @@ class ObjectManager : public ObjectManagerInterface,
   /// \param prio The bundle priority.
   /// \return A request ID that can be used to cancel the request.
   uint64_t Pull(const std::vector<rpc::ObjectReference> &object_refs,
-                BundlePriority prio,
-                const std::string &task_name) override;
+                BundlePriority prio) override;
 
   /// Cancels the pull request with the given ID. This cancels any fetches for
   /// objects that were passed to the original pull request, if no other pull

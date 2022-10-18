@@ -19,25 +19,25 @@ class MockGcsWorkerManager : public GcsWorkerManager {
  public:
   MOCK_METHOD(void,
               HandleReportWorkerFailure,
-              (rpc::ReportWorkerFailureRequest request,
+              (const rpc::ReportWorkerFailureRequest &request,
                rpc::ReportWorkerFailureReply *reply,
                rpc::SendReplyCallback send_reply_callback),
               (override));
   MOCK_METHOD(void,
               HandleGetWorkerInfo,
-              (rpc::GetWorkerInfoRequest request,
+              (const rpc::GetWorkerInfoRequest &request,
                rpc::GetWorkerInfoReply *reply,
                rpc::SendReplyCallback send_reply_callback),
               (override));
   MOCK_METHOD(void,
               HandleGetAllWorkerInfo,
-              (rpc::GetAllWorkerInfoRequest request,
+              (const rpc::GetAllWorkerInfoRequest &request,
                rpc::GetAllWorkerInfoReply *reply,
                rpc::SendReplyCallback send_reply_callback),
               (override));
   MOCK_METHOD(void,
               HandleAddWorkerInfo,
-              (rpc::AddWorkerInfoRequest request,
+              (const rpc::AddWorkerInfoRequest &request,
                rpc::AddWorkerInfoReply *reply,
                rpc::SendReplyCallback send_reply_callback),
               (override));

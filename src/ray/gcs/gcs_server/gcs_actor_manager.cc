@@ -225,7 +225,7 @@ GcsActorManager::GcsActorManager(
   RAY_CHECK(destroy_owned_placement_group_if_needed_);
 }
 
-void GcsActorManager::HandleRegisterActor(rpc::RegisterActorRequest request,
+void GcsActorManager::HandleRegisterActor(const rpc::RegisterActorRequest &request,
                                           rpc::RegisterActorReply *reply,
                                           rpc::SendReplyCallback send_reply_callback) {
   RAY_CHECK(request.task_spec().type() == TaskType::ACTOR_CREATION_TASK);
@@ -250,7 +250,7 @@ void GcsActorManager::HandleRegisterActor(rpc::RegisterActorRequest request,
   ++counts_[CountType::REGISTER_ACTOR_REQUEST];
 }
 
-void GcsActorManager::HandleCreateActor(rpc::CreateActorRequest request,
+void GcsActorManager::HandleCreateActor(const rpc::CreateActorRequest &request,
                                         rpc::CreateActorReply *reply,
                                         rpc::SendReplyCallback send_reply_callback) {
   RAY_CHECK(request.task_spec().type() == TaskType::ACTOR_CREATION_TASK);
@@ -289,7 +289,7 @@ void GcsActorManager::HandleCreateActor(rpc::CreateActorRequest request,
   ++counts_[CountType::CREATE_ACTOR_REQUEST];
 }
 
-void GcsActorManager::HandleGetActorInfo(rpc::GetActorInfoRequest request,
+void GcsActorManager::HandleGetActorInfo(const rpc::GetActorInfoRequest &request,
                                          rpc::GetActorInfoReply *reply,
                                          rpc::SendReplyCallback send_reply_callback) {
   ActorID actor_id = ActorID::FromBinary(request.actor_id());
@@ -314,7 +314,7 @@ void GcsActorManager::HandleGetActorInfo(rpc::GetActorInfoRequest request,
   ++counts_[CountType::GET_ACTOR_INFO_REQUEST];
 }
 
-void GcsActorManager::HandleGetAllActorInfo(rpc::GetAllActorInfoRequest request,
+void GcsActorManager::HandleGetAllActorInfo(const rpc::GetAllActorInfoRequest &request,
                                             rpc::GetAllActorInfoReply *reply,
                                             rpc::SendReplyCallback send_reply_callback) {
   auto limit = request.has_limit() ? request.limit() : -1;
@@ -379,7 +379,7 @@ void GcsActorManager::HandleGetAllActorInfo(rpc::GetAllActorInfoRequest request,
 }
 
 void GcsActorManager::HandleGetNamedActorInfo(
-    rpc::GetNamedActorInfoRequest request,
+    const rpc::GetNamedActorInfoRequest &request,
     rpc::GetNamedActorInfoReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
   const std::string &name = request.name();
@@ -409,7 +409,7 @@ void GcsActorManager::HandleGetNamedActorInfo(
   ++counts_[CountType::GET_NAMED_ACTOR_INFO_REQUEST];
 }
 
-void GcsActorManager::HandleListNamedActors(rpc::ListNamedActorsRequest request,
+void GcsActorManager::HandleListNamedActors(const rpc::ListNamedActorsRequest &request,
                                             rpc::ListNamedActorsReply *reply,
                                             rpc::SendReplyCallback send_reply_callback) {
   const std::string &ray_namespace = request.ray_namespace();
@@ -426,7 +426,7 @@ void GcsActorManager::HandleListNamedActors(rpc::ListNamedActorsRequest request,
   ++counts_[CountType::LIST_NAMED_ACTORS_REQUEST];
 }
 
-void GcsActorManager::HandleKillActorViaGcs(rpc::KillActorViaGcsRequest request,
+void GcsActorManager::HandleKillActorViaGcs(const rpc::KillActorViaGcsRequest &request,
                                             rpc::KillActorViaGcsReply *reply,
                                             rpc::SendReplyCallback send_reply_callback) {
   const auto &actor_id = ActorID::FromBinary(request.actor_id());

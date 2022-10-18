@@ -49,15 +49,12 @@ namespace core {
 
 class CoreWorkerDirectTaskReceiver {
  public:
-  using TaskHandler = std::function<Status(
-      const TaskSpecification &task_spec,
-      const std::shared_ptr<ResourceMappingType> resource_ids,
-      std::vector<std::pair<ObjectID, std::shared_ptr<RayObject>>> *return_objects,
-      std::vector<std::pair<ObjectID, std::shared_ptr<RayObject>>>
-          *dynamic_return_objects,
-      ReferenceCounter::ReferenceTableProto *borrower_refs,
-      bool *is_retryable_error,
-      bool *is_application_error)>;
+  using TaskHandler =
+      std::function<Status(const TaskSpecification &task_spec,
+                           const std::shared_ptr<ResourceMappingType> resource_ids,
+                           std::vector<std::shared_ptr<RayObject>> *return_objects,
+                           ReferenceCounter::ReferenceTableProto *borrower_refs,
+                           bool *is_retryable_error)>;
 
   using OnTaskDone = std::function<Status()>;
 
@@ -83,7 +80,7 @@ class CoreWorkerDirectTaskReceiver {
   /// \param[in] request The request message.
   /// \param[out] reply The reply message.
   /// \param[in] send_reply_callback The callback to be called when the request is done.
-  void HandleTask(rpc::PushTaskRequest request,
+  void HandleTask(const rpc::PushTaskRequest &request,
                   rpc::PushTaskReply *reply,
                   rpc::SendReplyCallback send_reply_callback);
 

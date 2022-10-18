@@ -36,16 +36,15 @@ class R2D2Config(DQNConfig):
 
     Example:
         >>> from ray.rllib.algorithms.r2d2.r2d2 import R2D2Config
-        >>> from ray import air
         >>> from ray import tune
         >>> config = R2D2Config()
         >>> config.training(train_batch_size=tune.grid_search([256, 64])
         >>> config.environment(env="CartPole-v1")
-        >>> tune.Tuner(
+        >>> tune.run(
         >>>     "R2D2",
-        >>>     run_config=air.RunConfig(stop={"episode_reward_mean":200}),
-        >>>     param_space=config.to_dict()
-        >>> ).fit()
+        >>>     stop={"episode_reward_mean":200},
+        >>>     config=config.to_dict()
+        >>> )
 
     Example:
         >>> from ray.rllib.algorithms.r2d2.r2d2 import R2D2Config
@@ -232,7 +231,7 @@ class _deprecated_default_config(dict):
     @Deprecated(
         old="ray.rllib.agents.dqn.r2d2::R2D2_DEFAULT_CONFIG",
         new="ray.rllib.algorithms.r2d2.r2d2::R2D2Config(...)",
-        error=True,
+        error=False,
     )
     def __getitem__(self, item):
         return super().__getitem__(item)

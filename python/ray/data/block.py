@@ -19,7 +19,6 @@ from typing import (
 import numpy as np
 
 import ray
-from ray import ObjectRefGenerator
 from ray.data._internal.util import _check_pyarrow_version
 from ray.types import ObjectRef
 from ray.util.annotations import DeveloperAPI
@@ -119,7 +118,7 @@ BatchUDF = Union[
     # UDF type.
     # Callable[[DataBatch, ...], DataBatch]
     Callable[[DataBatch], DataBatch],
-    "_CallableClassProtocol",
+    _CallableClassProtocol,
 ]
 
 # A UDF on data rows.
@@ -128,7 +127,7 @@ RowUDF = Union[
     # UDF type.
     # Callable[[T, ...], U]
     Callable[[T], U],
-    "_CallableClassProtocol[T, U]",
+    _CallableClassProtocol[T, U],
 ]
 
 # A list of block references pending computation by a single task. For example,
@@ -139,11 +138,11 @@ BlockPartition = List[Tuple[ObjectRef[Block], "BlockMetadata"]]
 # same type as the metadata that describes each block in the partition.
 BlockPartitionMetadata = "BlockMetadata"
 
-# TODO(ekl/chengsu): replace this with just `ObjectRefGenerator` once block splitting
-# is on by default. When block splitting is off, the type is a plain block.
-MaybeBlockPartition = Union[Block, ObjectRefGenerator]
+# TODO(ekl) replace this with just `BlockPartition` once block splitting is on
+# by default. When block splitting is off, the type is a plain block.
+MaybeBlockPartition = Union[Block, BlockPartition]
 
-VALID_BATCH_FORMATS = ["default", "native", "pandas", "pyarrow", "numpy"]
+VALID_BATCH_FORMATS = ["native", "pandas", "pyarrow", "numpy"]
 
 
 @DeveloperAPI
@@ -277,10 +276,6 @@ class BlockAccessor(Generic[T]):
         """
         raise NotImplementedError
 
-    def select(self, columns: List[KeyFn]) -> Block:
-        """Return a new block containing the provided columns."""
-        raise NotImplementedError
-
     def random_shuffle(self, random_seed: Optional[int]) -> Block:
         """Randomly shuffle this block."""
         raise NotImplementedError
@@ -307,8 +302,8 @@ class BlockAccessor(Generic[T]):
         """Return the base block that this accessor wraps."""
         raise NotImplementedError
 
-    def to_default(self) -> Block:
-        """Return the default data format for this accessor."""
+    def to_native(self) -> Block:
+        """Return the native data format for this accessor."""
         return self.to_block()
 
     def to_batch_format(self, batch_format: str) -> DataBatch:
@@ -320,8 +315,8 @@ class BlockAccessor(Generic[T]):
         Returns:
             This block formatted as the provided batch format.
         """
-        if batch_format == "default" or batch_format == "native":
-            return self.to_default()
+        if batch_format == "native":
+            return self.to_native()
         elif batch_format == "pandas":
             return self.to_pandas()
         elif batch_format == "pyarrow":

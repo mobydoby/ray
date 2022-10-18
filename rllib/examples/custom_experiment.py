@@ -50,7 +50,8 @@ if __name__ == "__main__":
 
     config["env"] = "CartPole-v0"
 
-    tune.Tuner(
-        tune.with_resources(experiment, ppo.PPO.default_resource_request(config)),
-        param_space=config,
-    ).fit()
+    tune.run(
+        experiment,
+        config=config,
+        resources_per_trial=ppo.PPO.default_resource_request(config),
+    )

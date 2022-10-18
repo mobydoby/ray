@@ -1,5 +1,3 @@
-.. _ray-debugger:
-
 Ray Debugger
 =============
 

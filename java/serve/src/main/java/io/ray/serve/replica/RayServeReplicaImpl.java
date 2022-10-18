@@ -6,12 +6,14 @@ import io.ray.runtime.metric.Count;
 import io.ray.runtime.metric.Gauge;
 import io.ray.runtime.metric.Histogram;
 import io.ray.runtime.metric.Metrics;
+import io.ray.runtime.serializer.MessagePackSerializer;
 import io.ray.serve.api.Serve;
 import io.ray.serve.common.Constants;
 import io.ray.serve.config.DeploymentConfig;
 import io.ray.serve.deployment.DeploymentVersion;
 import io.ray.serve.exception.RayServeException;
 import io.ray.serve.generated.RequestMetadata;
+import io.ray.serve.generated.RequestWrapper;
 import io.ray.serve.metrics.RayServeMetrics;
 import io.ray.serve.router.Query;
 import io.ray.serve.util.LogUtil;
@@ -209,11 +211,20 @@ public class RayServeReplicaImpl implements RayServeReplica {
       return new Object[0];
     }
 
+    // From Java Proxy or Handle.
     if (requestItem.getArgs() instanceof Object[]) {
       return (Object[]) requestItem.getArgs();
     }
 
-    return new Object[] {requestItem.getArgs()};
+    // From other language Proxy or Handle.
+    RequestWrapper requestWrapper = (RequestWrapper) requestItem.getArgs();
+    if (requestWrapper.getBody() == null || requestWrapper.getBody().isEmpty()) {
+      return new Object[0];
+    }
+
+    return new Object[] {
+      MessagePackSerializer.decode(requestWrapper.getBody().toByteArray(), Object.class)
+    };
   }
 
   private Method getRunnerMethod(String methodName, Object[] args, boolean isNullable) {

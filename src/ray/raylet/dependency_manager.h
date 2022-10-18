@@ -31,8 +31,7 @@ class TaskDependencyManagerInterface {
  public:
   virtual bool RequestTaskDependencies(
       const TaskID &task_id,
-      const std::vector<rpc::ObjectReference> &required_objects,
-      const std::string &task_name) = 0;
+      const std::vector<rpc::ObjectReference> &required_objects) = 0;
   virtual void RemoveTaskDependencies(const TaskID &task_id) = 0;
   virtual bool TaskDependenciesBlocked(const TaskID &task_id) const = 0;
   virtual bool CheckObjectLocal(const ObjectID &object_id) const = 0;
@@ -125,8 +124,7 @@ class DependencyManager : public TaskDependencyManagerInterface {
   /// \param required_objects The objects required by the task.
   /// \return Void.
   bool RequestTaskDependencies(const TaskID &task_id,
-                               const std::vector<rpc::ObjectReference> &required_objects,
-                               const std::string &task_name);
+                               const std::vector<rpc::ObjectReference> &required_objects);
 
   /// Cancel a task's dependencies. We will no longer attempt to fetch any
   /// remote dependencies, if no other task or worker requires them.

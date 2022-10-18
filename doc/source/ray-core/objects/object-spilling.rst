@@ -7,14 +7,11 @@ Ray 1.3+ spills objects to external storage once the object store is full. By de
 Single node
 -----------
 
-Ray uses object spilling by default. Without any setting, objects are spilled to `[temp_folder]/spill`. On Linux and MacOS, the `temp_folder` is `/tmp` by default.
+Ray uses object spilling by default. Without any setting, objects are spilled to `[temp_folder]/spill`. `temp_folder` is `/tmp` for Linux and MacOS by default.
 
-To configure the directory where objects are spilled to, use:
+To configure the directory where objects are placed, use:
 
 .. code-block:: python
-
-    import json
-    import ray
 
     ray.init(
         _system_config={
@@ -28,9 +25,6 @@ You can also specify multiple directories for spilling to spread the IO load and
 usage across multiple physical devices if needed (e.g., SSD devices):
 
 .. code-block:: python
-
-    import json
-    import ray
 
     ray.init(
         _system_config={
@@ -52,17 +46,13 @@ usage across multiple physical devices if needed (e.g., SSD devices):
         },
     )
 
-
 .. note::
   
-    To optimize the performance, it is recommended to use an SSD instead of an HDD when using object spilling for memory-intensive workloads.
+  To optimize the performance, it is recommended to use SSD instead of HDD when using object spilling for memory intensive workloads.
 
 If you are using an HDD, it is recommended that you specify a large buffer size (> 1MB) to reduce IO requests during spilling.
 
 .. code-block:: python
-
-    import json
-    import ray
 
     ray.init(
         _system_config={
@@ -84,9 +74,6 @@ The default threshold is 0.95 (95%). You can adjust the threshold by setting ``l
 
 .. code-block:: python
 
-    import json
-    import ray
-
     ray.init(
         _system_config={
             # Allow spilling until the local disk is 99% utilized.
@@ -106,9 +93,6 @@ The default threshold is 0.95 (95%). You can adjust the threshold by setting ``l
 To enable object spilling to remote storage (any URI supported by `smart_open <https://pypi.org/project/smart-open/>`__):
 
 .. code-block:: python
-
-    import json
-    import ray
 
     ray.init(
         _system_config={
@@ -132,9 +116,6 @@ Spilling to multiple remote storages is also supported.
 
 .. code-block:: python
 
-    import json
-    import ray
-
     ray.init(
         _system_config={
             "max_io_workers": 4,  # More IO workers for remote storage.
@@ -143,7 +124,7 @@ Spilling to multiple remote storages is also supported.
                 {
                   "type": "smart_open", 
                   "params": {
-                    "uri": ["s3://bucket/path1", "s3://bucket/path2", "s3://bucket/path3"],
+                    "uri": ["s3://bucket/path1", "s3://bucket/path2, "s3://bucket/path3"],
                   },
                   "buffer_size": 100 * 1024 * 1024, # Use a 100MB buffer for writes
                 },

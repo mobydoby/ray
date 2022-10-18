@@ -142,8 +142,7 @@ Status RedisClient::Connect(std::vector<instrumented_io_context *> io_services) 
   RAY_CHECK_OK(primary_context_->Connect(options_.server_ip_,
                                          options_.server_port_,
                                          /*sharding=*/options_.enable_sharding_conn_,
-                                         /*password=*/options_.password_,
-                                         /*enable_ssl=*/options_.enable_ssl_));
+                                         /*password=*/options_.password_));
 
   if (options_.enable_sharding_conn_) {
     // Moving sharding into constructor defaultly means that sharding = true.
@@ -166,8 +165,7 @@ Status RedisClient::Connect(std::vector<instrumented_io_context *> io_services) 
       RAY_CHECK_OK(shard_contexts_[i]->Connect(addresses[i],
                                                ports[i],
                                                /*sharding=*/true,
-                                               /*password=*/options_.password_,
-                                               /*enable_ssl=*/options_.enable_ssl_));
+                                               /*password=*/options_.password_));
     }
   } else {
     shard_contexts_.push_back(std::make_shared<RedisContext>(*io_services[0]));
@@ -175,8 +173,7 @@ Status RedisClient::Connect(std::vector<instrumented_io_context *> io_services) 
     RAY_CHECK_OK(shard_contexts_[0]->Connect(options_.server_ip_,
                                              options_.server_port_,
                                              /*sharding=*/true,
-                                             /*password=*/options_.password_,
-                                             /*enable_ssl=*/options_.enable_ssl_));
+                                             /*password=*/options_.password_));
   }
 
   Attach();

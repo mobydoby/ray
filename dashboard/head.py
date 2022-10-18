@@ -124,12 +124,7 @@ class DashboardHead:
         from ray.dashboard.http_server_head import HttpServerDashboardHead
 
         http_server = HttpServerDashboardHead(
-            self.ip,
-            self.http_host,
-            self.http_port,
-            self.http_port_retries,
-            self.gcs_address,
-            self.gcs_client,
+            self.ip, self.http_host, self.http_port, self.http_port_retries
         )
         await http_server.run(modules)
         return http_server

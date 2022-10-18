@@ -40,7 +40,6 @@ class SlateQConfig(AlgorithmConfig):
 
     Example:
         >>> from ray.rllib.algorithms.slateq import SlateQConfig
-        >>> from ray import air
         >>> from ray import tune
         >>> config = SlateQConfig()
         >>> # Print out some default values.
@@ -52,11 +51,11 @@ class SlateQConfig(AlgorithmConfig):
         >>> config.environment(env="CartPole-v1")
         >>> # Use to_dict() to get the old-style python config dict
         >>> # when running with tune.
-        >>> tune.Tuner(
+        >>> tune.run(
         ...     "SlateQ",
-        ...     run_config=air.RunConfig(stop={"episode_reward_mean": 160.0}),
-        ...     param_space=config.to_dict(),
-        ... ).fit()
+        ...     stop={"episode_reward_mean": 160.0},
+        ...     config=config.to_dict(),
+        ... )
     """
 
     def __init__(self):
@@ -248,7 +247,7 @@ class _deprecated_default_config(dict):
     @Deprecated(
         old="ray.rllib.algorithms.slateq.slateq::DEFAULT_CONFIG",
         new="ray.rllib.algorithms.slateq.slateq::SlateQConfig(...)",
-        error=True,
+        error=False,
     )
     def __getitem__(self, item):
         return super().__getitem__(item)

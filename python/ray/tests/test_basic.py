@@ -203,37 +203,23 @@ def test_invalid_arguments():
     )
 
     # Type check
-    for keyword in ("max_retries", "max_calls"):
+    for keyword in ("num_returns", "max_retries", "max_calls"):
         with pytest.raises(TypeError, match=re.escape(template1.format(keyword))):
             ray.remote(**{keyword: np.random.uniform(0, 1)})(f)
-    num_returns_template = (
-        "The type of keyword 'num_returns' "
-        + f"must be {(int, str, type(None))}, but received type {float}"
-    )
-    with pytest.raises(TypeError, match=re.escape(num_returns_template)):
-        ray.remote(**{"num_returns": np.random.uniform(0, 1)})(f)
 
     for keyword in ("max_restarts", "max_task_retries"):
         with pytest.raises(TypeError, match=re.escape(template1.format(keyword))):
             ray.remote(**{keyword: np.random.uniform(0, 1)})(A)
 
     # Value check for non-negative finite values
-    for v in (np.random.randint(-100, -2), -1):
-        keyword = "max_calls"
-        with pytest.raises(
-            ValueError,
-            match=f"The keyword '{keyword}' only accepts None, "
-            f"0 or a positive integer",
-        ):
-            ray.remote(**{keyword: v})(f)
-
-        keyword = "num_returns"
-        with pytest.raises(
-            ValueError,
-            match=f"The keyword '{keyword}' only accepts None, "
-            'a non-negative integer, or "dynamic"',
-        ):
-            ray.remote(**{keyword: v})(f)
+    for keyword in ("num_returns", "max_calls"):
+        for v in (np.random.randint(-100, -2), -1):
+            with pytest.raises(
+                ValueError,
+                match=f"The keyword '{keyword}' only accepts None, "
+                f"0 or a positive integer",
+            ):
+                ray.remote(**{keyword: v})(f)
 
     # Value check for non-negative and infinite values
     template2 = (

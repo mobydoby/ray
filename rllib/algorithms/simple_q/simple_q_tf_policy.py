@@ -10,11 +10,7 @@ from ray.rllib.models.tf.tf_action_dist import Categorical, TFActionDistribution
 from ray.rllib.policy.dynamic_tf_policy_v2 import DynamicTFPolicyV2
 from ray.rllib.policy.eager_tf_policy_v2 import EagerTFPolicyV2
 from ray.rllib.policy.sample_batch import SampleBatch
-from ray.rllib.policy.tf_mixins import (
-    TargetNetworkMixin,
-    compute_gradients,
-    LearningRateSchedule,
-)
+from ray.rllib.policy.tf_mixins import TargetNetworkMixin, compute_gradients
 from ray.rllib.utils.annotations import override
 from ray.rllib.utils.framework import try_import_tf
 from ray.rllib.utils.tf_utils import huber_loss
@@ -43,7 +39,7 @@ def get_simple_q_tf_policy(
         A TF Policy to be used with MAMLTrainer.
     """
 
-    class SimpleQTFPolicy(LearningRateSchedule, TargetNetworkMixin, base):
+    class SimpleQTFPolicy(TargetNetworkMixin, base):
         def __init__(
             self,
             obs_space,
@@ -70,13 +66,11 @@ def get_simple_q_tf_policy(
                 existing_model=existing_model,
             )
 
-            LearningRateSchedule.__init__(self, config["lr"], config["lr_schedule"])
-
             # Note: this is a bit ugly, but loss and optimizer initialization must
             # happen after all the MixIns are initialized.
             self.maybe_initialize_optimizer_and_loss()
 
-            TargetNetworkMixin.__init__(self)
+            TargetNetworkMixin.__init__(self, obs_space, action_space, config)
 
         @override(base)
         def make_model(self) -> ModelV2:
@@ -169,7 +163,7 @@ def get_simple_q_tf_policy(
 
             # compute RHS of bellman equation
             q_t_selected_target = (
-                tf.cast(train_batch[SampleBatch.REWARDS], tf.float32)
+                train_batch[SampleBatch.REWARDS]
                 + self.config["gamma"] * q_tp1_best_masked
             )
 
@@ -190,26 +184,7 @@ def get_simple_q_tf_policy(
 
         @override(base)
         def extra_learn_fetches_fn(self) -> Dict[str, TensorType]:
-            return {
-                "td_error": self.td_error,
-                "learner_stats": {"cur_lr": self.cur_lr},
-            }
-
-        @override(base)
-        def stats_fn(self, train_batch: SampleBatch) -> Dict[str, TensorType]:
-            """Returns the learning rate in a stats dict.
-
-            Args:
-                policy: The Policy object.
-                train_batch: The data used for training.
-
-            Returns:
-                Dict[str, TensorType]: The stats dict.
-            """
-
-            return {
-                "cur_lr": self.cur_lr,
-            }
+            return {"td_error": self.td_error}
 
         def _compute_q_values(
             self, model: ModelV2, obs_batch: TensorType, is_training=None
