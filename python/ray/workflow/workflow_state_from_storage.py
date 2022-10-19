@@ -7,7 +7,6 @@ from ray.workflow.exceptions import WorkflowTaskNotRecoverableError
 from ray.workflow import workflow_storage
 from ray.workflow.workflow_state import WorkflowExecutionState, Task
 
-
 def workflow_state_from_storage(
     workflow_id: str, task_id: Optional[TaskID]
 ) -> WorkflowExecutionState:

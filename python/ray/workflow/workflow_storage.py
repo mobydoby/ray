@@ -453,6 +453,7 @@ class WorkflowStorage:
 
     def _locate_output_task_id(self, task_id: TaskID) -> str:
         metadata = self._get(self._key_task_output_metadata(task_id), True)
+        print(f"metadata, which should be ret: {metadata}")
         return metadata.get("dynamic_output_task_id") or metadata["output_task_id"]
 
     def get_entrypoint_task_id(self) -> TaskID:
@@ -767,6 +768,7 @@ class WorkflowStorage:
                 raise KeyNotFoundError
             if is_json:
                 ret = json.loads(unmarshaled.decode())
+                print(f"ret: {ret}")
             else:
                 ret = cloudpickle.loads(unmarshaled)
         except KeyNotFoundError as e:

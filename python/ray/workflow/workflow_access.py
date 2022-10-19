@@ -344,22 +344,7 @@ class WorkflowManagementActor:
         Raises: 
             WorkflowNotFound: the workflow does not exist
 
-        the returned dictionary has the form: 
-        Dict workflow_data{
-             Workflow_Id :
-             {
-                Dict workflow_metadata: {
-                  status,
-                  user_metadata,
-                  stats,
-                }
-                Dict task_data: {
-                    "downstream_dependencies": list,
-                    "task_execution_data": obj,
-                    "task_data": obj
-                }
-            }
-        }
+        Returns: WorkflowTree
         """
 
         # assert the workflow exists
@@ -369,13 +354,15 @@ class WorkflowManagementActor:
         # gets the state of the workflow either from storage or from executor state
         status = self.get_workflow_status(workflow_id)
         if status != WorkflowStatus.RUNNING:
-            # TODO: if the workflow is not running, we have to retrive the accesspoint
-            # of the start of the workflow. 
+
+            # raise FutureWarning("only functionality for not executed tasks are currently retreivable")
+            print("only functionality for not executed tasks are currently retreivable")
 
             from ray.workflow.workflow_state_from_storage import workflow_state_from_storage
-            state = workflow_state_from_storage(workflow_id, None)
-            print(f"NOT RUNNING!: {state.downstream_dependencies}")
-        
+            root_task = None
+
+            state = workflow_state_from_storage(workflow_id, root_task)
+
         else: # when the workflow is running for the first time
 
             # if not in executors, not a real workflow
@@ -384,8 +371,6 @@ class WorkflowManagementActor:
             
             #get state from executors
             state = self._workflow_executors[workflow_id].get_state()
-            print(f"RUNNIN!: {state.downstream_dependencies}\n\n\n")
-
         
         tasks_data = state.get_metadata()
 
